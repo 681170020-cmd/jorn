@@ -5,12 +5,13 @@ const Community = () => {
     const colors = {
         bg: '#fdfaf6',
         cardBg: '#ffffff',
-        primary: '#8b5e3c',
+        primary: '#8b5e3c', // Brown
         textMain: '#3d2b1f',
         textSecondary: '#8d7b6d',
         border: 'rgba(139, 94, 60, 0.15)',
         heartActive: '#e74c3c',
-        formBg: '#f0e9e4'
+        formBg: '#f0e9e4',
+        overlay: 'rgba(61, 43, 31, 0.4)'
     };
 
     // Sample initial posts
@@ -18,6 +19,7 @@ const Community = () => {
         {
             id: 1,
             author: 'คนรักหมา',
+            image: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?auto=format&fit=crop&q=80&w=800',
             content: 'น้องหมาที่บ้านไม่ยอมกินข้าวมา 2 วันแล้ว มีใครพอจะแนะนำวิธีได้บ้างคะ? 🐕',
             likes: 5,
             liked: false,
@@ -28,6 +30,7 @@ const Community = () => {
         {
             id: 2,
             author: 'แมวส้ม',
+            image: '',
             content: 'แมวที่บ้านเพิ่งคลอดลูก 4 ตัวค่ะ น่ารักมากๆ 🐱💕',
             likes: 12,
             liked: false,
@@ -38,7 +41,18 @@ const Community = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
     const [commentText, setCommentText] = useState({});
-    const [newPost, setNewPost] = useState('');
+    const [newPost, setNewPost] = useState({ content: '', image: null, preview: '' });
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setNewPost({
+                ...newPost,
+                image: file,
+                preview: URL.createObjectURL(file)
+            });
+        }
+    };
 
     const handleLike = (postId) => {
         setPosts(posts.map(post => 
@@ -49,17 +63,18 @@ const Community = () => {
     };
 
     const handleAddPost = () => {
-        if (!newPost.trim()) return;
+        if (!newPost.content.trim()) return;
         const post = {
             id: Date.now(),
             author: 'ผู้ใช้งาน',
-            content: newPost,
+            content: newPost.content,
+            image: newPost.preview,
             likes: 0,
             liked: false,
             comments: []
         };
         setPosts([post, ...posts]);
-        setNewPost('');
+        setNewPost({ content: '', image: null, preview: '' });
         setShowForm(false);
     };
 
@@ -107,10 +122,9 @@ const Community = () => {
         title: { fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' },
         subtitle: { fontSize: '1rem', color: colors.textSecondary },
         feed: { width: '100%', maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
-        createBtn: { padding: '0.8rem 1.5rem', borderRadius: '25px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '700', cursor: 'pointer', marginBottom: '1.5rem', alignSelf: 'flex-start' },
-        formCard: { backgroundColor: colors.formBg, borderRadius: '20px', padding: '1.5rem', marginBottom: '1.5rem' },
-        textarea: { width: '100%', padding: '1rem', borderRadius: '15px', border: `1px solid ${colors.border}`, fontSize: '1rem', resize: 'none', minHeight: '100px', fontFamily: 'inherit', marginBottom: '1rem' },
-        card: { backgroundColor: colors.cardBg, borderRadius: '20px', border: `1px solid ${colors.border}`, padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' },
+        card: { backgroundColor: colors.cardBg, borderRadius: '20px', border: `1px solid ${colors.border}`, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' },
+        cardBody: { padding: '1.5rem' },
+        cardImage: { width: '100%', height: '300px', objectFit: 'cover', display: 'block' },
         cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' },
         author: { fontWeight: '700', color: colors.primary },
         actions: { display: 'flex', gap: '0.5rem' },
@@ -124,7 +138,76 @@ const Community = () => {
         commentText: { fontSize: '0.9rem' },
         commentInput: { display: 'flex', gap: '0.5rem', marginTop: '0.5rem' },
         commentInputField: { flex: 1, padding: '0.6rem 1rem', borderRadius: '20px', border: `1px solid ${colors.border}`, fontSize: '0.9rem' },
-        smallBtn: { padding: '0.6rem 1rem', borderRadius: '20px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem' }
+        smallBtn: { padding: '0.6rem 1.2rem', borderRadius: '20px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
+        
+        // Modal Styles
+        modalOverlay: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: colors.overlay,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+            backdropFilter: 'blur(4px)'
+        },
+        modalCard: {
+            backgroundColor: 'white',
+            borderRadius: '24px',
+            width: '90%',
+            maxWidth: '500px',
+            padding: '2rem',
+            position: 'relative',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+            animation: 'modalSlideUp 0.3s ease-out'
+        },
+        modalTitle: { margin: '0 0 1.5rem', fontSize: '1.5rem', fontWeight: '700' },
+        inputGroup: { marginBottom: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' },
+        label: { fontSize: '0.9rem', fontWeight: '600', color: colors.textSecondary },
+        input: { padding: '0.8rem 1rem', borderRadius: '12px', border: `1px solid ${colors.border}`, fontSize: '1rem', fontFamily: 'inherit' },
+        textarea: { width: '100%', padding: '1rem', borderRadius: '15px', border: `1px solid ${colors.border}`, fontSize: '1rem', resize: 'none', minHeight: '120px', fontFamily: 'inherit' },
+        imageUploadArea: {
+            border: `2px dashed ${colors.border}`,
+            borderRadius: '15px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease'
+        },
+        previewImg: {
+            width: '100%',
+            maxHeight: '200px',
+            objectFit: 'cover',
+            borderRadius: '10px',
+            marginTop: '0.5rem'
+        },
+        
+        // FAB Styles
+        fab: {
+            position: 'fixed',
+            bottom: '40px',
+            right: '40px',
+            backgroundColor: colors.primary,
+            color: 'white',
+            width: '70px',
+            height: '70px',
+            borderRadius: '50%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 8px 25px rgba(139, 94, 60, 0.3)',
+            border: 'none',
+            zIndex: 1000,
+            gap: '2px',
+            transition: 'transform 0.2s ease, background-color 0.2s ease',
+        },
+        fabIcon: { fontSize: '24px', fontWeight: '400', lineHeight: 1 },
+        fabText: { fontSize: '0.7rem', fontWeight: '600' }
     };
 
     return (
@@ -135,72 +218,136 @@ const Community = () => {
             </header>
 
             <main style={styles.feed}>
-                <button style={styles.createBtn} onClick={() => setShowForm(!showForm)}>
-                    {showForm ? '✕ ยกเลิก' : '+ เริ่มการสนทนา'}
+                {/* Floating Action Button */}
+                <button 
+                    style={styles.fab} 
+                    onClick={() => setShowForm(true)}
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    <span style={styles.fabIcon}>+</span>
+                    <span style={styles.fabText}>โพสต์</span>
                 </button>
 
+                {/* Modal Form */}
                 {showForm && (
-                    <div style={styles.formCard}>
-                        <textarea 
-                            style={styles.textarea}
-                            placeholder="พิมพ์ข้อความที่ต้องการแลกเปลี่ยนหรือสอบถาม..."
-                            value={newPost}
-                            onChange={(e) => setNewPost(e.target.value)}
-                        />
-                        <button style={styles.smallBtn} onClick={handleAddPost}>โพสต์</button>
+                    <div style={styles.modalOverlay} onClick={() => setShowForm(false)}>
+                        <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+                            <button 
+                                onClick={() => setShowForm(false)} 
+                                style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
+                            >✕</button>
+                            
+                            <h2 style={styles.modalTitle}>สร้างโพสต์ใหม่</h2>
+                            
+                            <div style={styles.inputGroup}>
+                                <label style={styles.label}>รายละเอียด</label>
+                                <textarea 
+                                    style={styles.textarea}
+                                    placeholder="เล่าเรื่องราวหรือสอบถามได้ที่นี่..."
+                                    value={newPost.content}
+                                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={styles.inputGroup}>
+                                <label style={styles.label}>รูปภาพ</label>
+                                <div 
+                                    style={styles.imageUploadArea}
+                                    onClick={() => document.getElementById('imageInput').click()}
+                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = colors.formBg}
+                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                    <input 
+                                        type="file" 
+                                        id="imageInput" 
+                                        hidden 
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                    />
+                                    {newPost.preview ? (
+                                        <div>
+                                            <p style={{ fontSize: '0.8rem', color: colors.primary }}>คลิกเพื่อเปลี่ยนรูป</p>
+                                            <img src={newPost.preview} alt="preview" style={styles.previewImg} />
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📸</div>
+                                            <p style={{ fontSize: '0.9rem', color: colors.textSecondary }}>เพิ่มรูปภาพประกอบ</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <button style={{ ...styles.smallBtn, width: '100%', padding: '1rem', marginTop: '1rem' }} onClick={handleAddPost}>
+                                โพสต์
+                            </button>
+                        </div>
                     </div>
                 )}
 
                 {posts.map(post => (
                     <div key={post.id} style={styles.card}>
-                        <div style={styles.cardHeader}>
-                            <span style={styles.author}>{post.author}</span>
-                            <div style={styles.actions}>
-                                <button style={styles.actionBtn} onClick={() => setEditingPost(post.id)}>แก้ไข</button>
-                                <button style={styles.actionBtn} onClick={() => handleDeletePost(post.id)}>ลบ</button>
-                            </div>
-                        </div>
-
-                        {editingPost === post.id ? (
-                            <div>
-                                <textarea style={styles.textarea} defaultValue={post.content} id={`edit-${post.id}`} />
-                                <button style={styles.smallBtn} onClick={() => handleEditPost(post.id, document.getElementById(`edit-${post.id}`).value)}>บันทึก</button>
-                            </div>
-                        ) : (
-                            <p style={styles.content}>{post.content}</p>
-                        )}
-
-                        <div style={styles.interactionBar}>
-                            <button 
-                                style={{
-                                    ...styles.likeBtn,
-                                    color: post.liked ? colors.heartActive : colors.textSecondary,
-                                    transform: post.liked ? 'scale(1.1)' : 'scale(1)'
-                                }}
-                                onClick={() => handleLike(post.id)}
-                            >
-                                {post.liked ? '❤️' : '🤍'} {post.likes}
-                            </button>
-                            <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>💬 {post.comments.length} ความคิดเห็น</span>
-                        </div>
-
-                        <div style={styles.commentSection}>
-                            {post.comments.map(c => (
-                                <div key={c.id} style={styles.comment}>
-                                    <div style={styles.commentAuthor}>{c.author}</div>
-                                    <div style={styles.commentText}>{c.text}</div>
+                        {post.image && <img src={post.image} alt="post" style={styles.cardImage} />}
+                        <div style={styles.cardBody}>
+                            <div style={styles.cardHeader}>
+                                <span style={styles.author}>{post.author}</span>
+                                <div style={styles.actions}>
+                                    <button style={styles.actionBtn} onClick={() => setEditingPost(post.id)}>แก้ไข</button>
+                                    <button style={styles.actionBtn} onClick={() => handleDeletePost(post.id)}>ลบ</button>
                                 </div>
-                            ))}
-                            <div style={styles.commentInput}>
-                                <input style={styles.commentInputField} placeholder="เขียนความคิดเห็น..." value={commentText[post.id] || ''} onChange={(e) => setCommentText({...commentText, [post.id]: e.target.value})} onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)} />
-                                <button style={styles.smallBtn} onClick={() => handleAddComment(post.id)}>ส่ง</button>
+                            </div>
+
+                            {editingPost === post.id ? (
+                                <div>
+                                    <textarea style={styles.textarea} defaultValue={post.content} id={`edit-${post.id}`} />
+                                    <button style={styles.smallBtn} onClick={() => handleEditPost(post.id, document.getElementById(`edit-${post.id}`).value)}>บันทึก</button>
+                                </div>
+                            ) : (
+                                <p style={styles.content}>{post.content}</p>
+                            )}
+
+                            <div style={styles.interactionBar}>
+                                <button 
+                                    style={{
+                                        ...styles.likeBtn,
+                                        color: post.liked ? colors.heartActive : colors.textSecondary,
+                                        transform: post.liked ? 'scale(1.1)' : 'scale(1)'
+                                    }}
+                                    onClick={() => handleLike(post.id)}
+                                >
+                                    {post.liked ? '❤️' : '🤍'} {post.likes}
+                                </button>
+                                <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>💬 {post.comments.length} ความคิดเห็น</span>
+                            </div>
+
+                            <div style={styles.commentSection}>
+                                {post.comments.map(c => (
+                                    <div key={c.id} style={styles.comment}>
+                                        <div style={styles.commentAuthor}>{c.author}</div>
+                                        <div style={styles.commentText}>{c.text}</div>
+                                    </div>
+                                ))}
+                                <div style={styles.commentInput}>
+                                    <input style={styles.commentInputField} placeholder="เขียนความคิดเห็น..." value={commentText[post.id] || ''} onChange={(e) => setCommentText({...commentText, [post.id]: e.target.value})} onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)} />
+                                    <button style={styles.smallBtn} onClick={() => handleAddComment(post.id)}>ส่ง</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 ))}
             </main>
+
+            <style>
+                {`
+                    @keyframes modalSlideUp {
+                        from { transform: translateY(20px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                `}
+            </style>
         </div>
     );
 };
 
-export default Community; 
+export default Community;

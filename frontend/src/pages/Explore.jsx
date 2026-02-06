@@ -11,7 +11,8 @@ const Explore = () => {
         border: 'rgba(139, 94, 60, 0.15)',
         heartActive: '#e74c3c',
         formBg: '#f0e9e4',
-        tagBg: 'rgba(139, 94, 60, 0.1)'
+        tagBg: 'rgba(139, 94, 60, 0.1)',
+        overlay: 'rgba(61, 43, 31, 0.4)'
     };
 
     // Sample initial posts for "Find Home" feature
@@ -55,6 +56,7 @@ const Explore = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
     const [commentText, setCommentText] = useState({});
+    const [imagePreview, setImagePreview] = useState('');
     
     // New post form state
     const [newPost, setNewPost] = useState({
@@ -69,7 +71,15 @@ const Explore = () => {
         content: ''
     });
 
-    // Like/Unlike post
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreview(previewUrl);
+            setNewPost({ ...newPost, petImage: previewUrl });
+        }
+    };
+
     const handleLike = (postId) => {
         setPosts(posts.map(post => 
             post.id === postId 
@@ -78,7 +88,6 @@ const Explore = () => {
         ));
     };
 
-    // Add new post
     const handleAddPost = () => {
         if (!newPost.petName.trim() || !newPost.content.trim()) return;
         const post = {
@@ -101,15 +110,14 @@ const Explore = () => {
             meetupPlace: '',
             content: ''
         });
+        setImagePreview('');
         setShowForm(false);
     };
 
-    // Delete post
     const handleDeletePost = (postId) => {
         setPosts(posts.filter(post => post.id !== postId));
     };
 
-    // Edit post
     const handleEditPost = (postId, newContent) => {
         if (!newContent.trim()) return;
         setPosts(posts.map(post => 
@@ -118,16 +126,12 @@ const Explore = () => {
         setEditingPost(null);
     };
 
-    // Add comment
     const handleAddComment = (postId) => {
         const text = commentText[postId];
         if (!text?.trim()) return;
         setPosts(posts.map(post => 
             post.id === postId 
-                ? { 
-                    ...post, 
-                    comments: [...post.comments, { id: Date.now(), author: 'ผู้ใช้งาน', text }] 
-                }
+                ? { ...post, comments: [...post.comments, { id: Date.now(), author: 'ผู้ใช้งาน', text }] }
                 : post
         ));
         setCommentText({ ...commentText, [postId]: '' });
@@ -145,230 +149,107 @@ const Explore = () => {
             flexDirection: 'column',
             alignItems: 'center'
         },
-        header: {
-            textAlign: 'center',
-            marginBottom: '2rem',
+        header: { textAlign: 'center', marginBottom: '2rem', width: '100%', maxWidth: '700px' },
+        title: { fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' },
+        subtitle: { fontSize: '1rem', color: colors.textSecondary },
+        feed: { width: '100%', maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
+        card: { backgroundColor: colors.cardBg, borderRadius: '20px', border: `1px solid ${colors.border}`, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' },
+        cardImage: { width: '100%', height: '280px', objectFit: 'cover' },
+        cardBody: { padding: '1.5rem' },
+        cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' },
+        petName: { fontSize: '1.5rem', fontWeight: '700', color: colors.textMain, margin: 0 },
+        author: { fontSize: '0.85rem', color: colors.textSecondary, marginTop: '0.2rem' },
+        actions: { display: 'flex', gap: '0.5rem' },
+        actionBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: colors.textSecondary },
+        infoGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.8rem', marginBottom: '1rem' },
+        infoItem: { display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' },
+        infoLabel: { color: colors.textSecondary },
+        infoValue: { fontWeight: '600' },
+        tag: { display: 'inline-block', padding: '4px 12px', backgroundColor: colors.tagBg, color: colors.primary, borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', marginBottom: '1rem' },
+        content: { fontSize: '1rem', lineHeight: '1.6', marginBottom: '1rem' },
+        interactionBar: { display: 'flex', alignItems: 'center', gap: '1.5rem', paddingTop: '1rem', borderTop: `1px solid ${colors.border}` },
+        likeBtn: { display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem' },
+        commentSection: { marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${colors.border}` },
+        comment: { backgroundColor: colors.formBg, borderRadius: '12px', padding: '0.8rem 1rem', marginBottom: '0.5rem' },
+        commentAuthor: { fontWeight: '600', fontSize: '0.85rem', color: colors.primary },
+        commentText: { fontSize: '0.9rem' },
+        commentInput: { display: 'flex', gap: '0.5rem', marginTop: '0.5rem' },
+        commentInputField: { flex: 1, padding: '0.6rem 1rem', borderRadius: '20px', border: `1px solid ${colors.border}`, fontSize: '0.9rem' },
+        smallBtn: { padding: '0.6rem 1.2rem', borderRadius: '20px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '600', cursor: 'pointer' },
+
+        // Modal Styles
+        modalOverlay: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
             width: '100%',
-            maxWidth: '700px'
-        },
-        title: {
-            fontSize: '2.5rem',
-            fontWeight: '800',
-            marginBottom: '0.5rem'
-        },
-        subtitle: {
-            fontSize: '1rem',
-            color: colors.textSecondary
-        },
-        feed: {
-            width: '100%',
-            maxWidth: '700px',
+            height: '100%',
+            backgroundColor: colors.overlay,
             display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem'
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+            backdropFilter: 'blur(4px)'
         },
-        createBtn: {
-            padding: '0.8rem 1.5rem',
-            borderRadius: '25px',
-            border: 'none',
-            backgroundColor: colors.primary,
-            color: 'white',
-            fontWeight: '700',
-            cursor: 'pointer',
-            marginBottom: '1.5rem',
-            alignSelf: 'flex-start'
+        modalCard: {
+            backgroundColor: 'white',
+            borderRadius: '24px',
+            width: '90%',
+            maxWidth: '600px',
+            padding: '2rem',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            position: 'relative',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+            animation: 'modalSlideUp 0.3s ease-out'
         },
-        formCard: {
-            backgroundColor: colors.formBg,
-            borderRadius: '20px',
-            padding: '1.5rem',
-            marginBottom: '1.5rem'
-        },
-        formTitle: {
-            fontSize: '1.2rem',
-            fontWeight: '700',
-            marginBottom: '1rem',
-            color: colors.textMain
-        },
-        formGrid: {
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem',
-            marginBottom: '1rem'
-        },
-        inputGroup: {
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.3rem'
-        },
-        label: {
-            fontSize: '0.85rem',
-            fontWeight: '600',
-            color: colors.textSecondary
-        },
-        input: {
-            padding: '0.7rem 1rem',
-            borderRadius: '12px',
-            border: `1px solid ${colors.border}`,
-            fontSize: '0.95rem',
-            fontFamily: 'inherit'
-        },
-        select: {
-            padding: '0.7rem 1rem',
-            borderRadius: '12px',
-            border: `1px solid ${colors.border}`,
-            fontSize: '0.95rem',
-            fontFamily: 'inherit',
-            backgroundColor: 'white'
-        },
-        textarea: {
-            width: '100%',
-            padding: '1rem',
+        formTitle: { fontSize: '1.5rem', fontWeight: '700', marginBottom: '1.5rem' },
+        formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.2rem' },
+        inputGroup: { display: 'flex', flexDirection: 'column', gap: '0.4rem' },
+        label: { fontSize: '0.85rem', fontWeight: '600', color: colors.textSecondary },
+        input: { padding: '0.7rem 1rem', borderRadius: '12px', border: `1px solid ${colors.border}`, fontSize: '0.95rem', fontFamily: 'inherit' },
+        select: { padding: '0.7rem 1rem', borderRadius: '12px', border: `1px solid ${colors.border}`, fontSize: '0.95rem', fontFamily: 'inherit', backgroundColor: 'white' },
+        textarea: { width: '100%', padding: '1rem', borderRadius: '15px', border: `1px solid ${colors.border}`, fontSize: '1rem', resize: 'none', minHeight: '100px', fontFamily: 'inherit' },
+        imageUploadArea: {
+            border: `2px dashed ${colors.border}`,
             borderRadius: '15px',
-            border: `1px solid ${colors.border}`,
-            fontSize: '1rem',
-            resize: 'none',
-            minHeight: '80px',
-            fontFamily: 'inherit'
+            padding: '1.5rem',
+            textAlign: 'center',
+            cursor: 'pointer',
+            gridColumn: 'span 2',
+            transition: 'background-color 0.2s ease'
         },
-        card: {
-            backgroundColor: colors.cardBg,
-            borderRadius: '20px',
-            border: `1px solid ${colors.border}`,
-            overflow: 'hidden',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
-        },
-        cardImage: {
+        previewImg: {
             width: '100%',
-            height: '280px',
+            maxHeight: '200px',
             objectFit: 'cover',
-            objectPosition: 'center'
-        },
-        cardBody: {
-            padding: '1.5rem'
-        },
-        cardHeader: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: '1rem'
-        },
-        petName: {
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            color: colors.textMain,
-            margin: 0
-        },
-        author: {
-            fontSize: '0.85rem',
-            color: colors.textSecondary,
-            marginTop: '0.2rem'
-        },
-        actions: {
-            display: 'flex',
-            gap: '0.5rem'
-        },
-        actionBtn: {
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            color: colors.textSecondary
-        },
-        infoGrid: {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '0.8rem',
-            marginBottom: '1rem'
-        },
-        infoItem: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '0.9rem'
-        },
-        infoLabel: {
-            color: colors.textSecondary
-        },
-        infoValue: {
-            fontWeight: '600',
-            color: colors.textMain
-        },
-        tag: {
-            display: 'inline-block',
-            padding: '4px 12px',
-            backgroundColor: colors.tagBg,
-            color: colors.primary,
-            borderRadius: '20px',
-            fontSize: '0.8rem',
-            fontWeight: '600'
-        },
-        content: {
-            fontSize: '1rem',
-            lineHeight: '1.6',
-            marginBottom: '1rem',
-            color: colors.textMain
-        },
-        interactionBar: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1.5rem',
-            paddingTop: '1rem',
-            borderTop: `1px solid ${colors.border}`
-        },
-        likeBtn: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '1rem',
-            transition: 'transform 0.2s ease'
-        },
-        commentSection: {
-            marginTop: '1rem',
-            paddingTop: '1rem',
-            borderTop: `1px solid ${colors.border}`
-        },
-        comment: {
-            backgroundColor: colors.formBg,
-            borderRadius: '12px',
-            padding: '0.8rem 1rem',
-            marginBottom: '0.5rem'
-        },
-        commentAuthor: {
-            fontWeight: '600',
-            fontSize: '0.85rem',
-            color: colors.primary,
-            marginBottom: '0.3rem'
-        },
-        commentText: {
-            fontSize: '0.9rem',
-            color: colors.textMain
-        },
-        commentInput: {
-            display: 'flex',
-            gap: '0.5rem',
+            borderRadius: '10px',
             marginTop: '0.5rem'
         },
-        commentInputField: {
-            flex: 1,
-            padding: '0.6rem 1rem',
-            borderRadius: '20px',
-            border: `1px solid ${colors.border}`,
-            fontSize: '0.9rem'
-        },
-        smallBtn: {
-            padding: '0.6rem 1rem',
-            borderRadius: '20px',
-            border: 'none',
+
+        // FAB Styles
+        fab: {
+            position: 'fixed',
+            bottom: '40px',
+            right: '40px',
             backgroundColor: colors.primary,
             color: 'white',
-            fontWeight: '600',
+            width: '70px',
+            height: '70px',
+            borderRadius: '50%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
             cursor: 'pointer',
-            fontSize: '0.85rem'
-        }
+            boxShadow: '0 8px 25px rgba(139, 94, 60, 0.3)',
+            border: 'none',
+            zIndex: 1000,
+            gap: '2px',
+            transition: 'transform 0.2s ease, background-color 0.2s ease',
+        },
+        fabIcon: { fontSize: '24px', fontWeight: '400', lineHeight: 1 },
+        fabText: { fontSize: '0.7rem', fontWeight: '600' }
     };
 
     const getDeliveryLabel = (method, place) => {
@@ -386,121 +267,100 @@ const Explore = () => {
             </header>
 
             <main style={styles.feed}>
-                {/* Create Post Button */}
-                <button style={styles.createBtn} onClick={() => setShowForm(!showForm)}>
-                    {showForm ? '✕ ยกเลิก' : '+ ประกาศหาบ้าน'}
+                {/* Floating Action Button */}
+                <button 
+                    style={styles.fab} 
+                    onClick={() => setShowForm(true)}
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    <span style={styles.fabIcon}>+</span>
+                    <span style={styles.fabText}>โพสต์</span>
                 </button>
 
-                {/* Create Post Form */}
+                {/* Modal Form */}
                 {showForm && (
-                    <div style={styles.formCard}>
-                        <h3 style={styles.formTitle}>ข้อมูลสัตว์เลี้ยง</h3>
-                        
-                        <div style={styles.formGrid}>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>ชื่อสัตว์เลี้ยง *</label>
-                                <input 
-                                    style={styles.input}
-                                    placeholder="ชื่อน้อง"
-                                    value={newPost.petName}
-                                    onChange={(e) => setNewPost({...newPost, petName: e.target.value})}
-                                />
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>URL รูปภาพ</label>
-                                <input 
-                                    style={styles.input}
-                                    placeholder="https://..."
-                                    value={newPost.petImage}
-                                    onChange={(e) => setNewPost({...newPost, petImage: e.target.value})}
-                                />
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>เพศ</label>
-                                <select 
-                                    style={styles.select}
-                                    value={newPost.gender}
-                                    onChange={(e) => setNewPost({...newPost, gender: e.target.value})}
-                                >
-                                    <option value="ชาย">ชาย</option>
-                                    <option value="หญิง">หญิง</option>
-                                    <option value="ไม่ทราบ">ไม่ทราบ</option>
-                                </select>
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>อายุโดยประมาณ</label>
-                                <input 
-                                    style={styles.input}
-                                    placeholder="เช่น 2 ปี, 6 เดือน"
-                                    value={newPost.age}
-                                    onChange={(e) => setNewPost({...newPost, age: e.target.value})}
-                                />
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>สุขภาพ</label>
-                                <input 
-                                    style={styles.input}
-                                    placeholder="เช่น สุขภาพดี ทำหมันแล้ว"
-                                    value={newPost.health}
-                                    onChange={(e) => setNewPost({...newPost, health: e.target.value})}
-                                />
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>ที่อยู่ปัจจุบัน</label>
-                                <input 
-                                    style={styles.input}
-                                    placeholder="เช่น กรุงเทพฯ ลาดพร้าว"
-                                    value={newPost.location}
-                                    onChange={(e) => setNewPost({...newPost, location: e.target.value})}
-                                />
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>วิธีการส่งต่อ</label>
-                                <select 
-                                    style={styles.select}
-                                    value={newPost.deliveryMethod}
-                                    onChange={(e) => setNewPost({...newPost, deliveryMethod: e.target.value})}
-                                >
-                                    <option value="ไปส่งให้">ไปส่งให้</option>
-                                    <option value="มารับเอง">มารับเอง</option>
-                                    <option value="นัดรับ">นัดรับ (ระบุสถานที่)</option>
-                                </select>
-                            </div>
-                            {newPost.deliveryMethod === 'นัดรับ' && (
+                    <div style={styles.modalOverlay} onClick={() => setShowForm(false)}>
+                        <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+                            <button 
+                                onClick={() => setShowForm(false)} 
+                                style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
+                            >✕</button>
+                            
+                            <h2 style={styles.formTitle}>ประกาศหาบ้าน</h2>
+                            
+                            <div style={styles.formGrid}>
                                 <div style={styles.inputGroup}>
-                                    <label style={styles.label}>สถานที่นัดรับ</label>
-                                    <input 
-                                        style={styles.input}
-                                        placeholder="เช่น หน้า Central Ladprao"
-                                        value={newPost.meetupPlace}
-                                        onChange={(e) => setNewPost({...newPost, meetupPlace: e.target.value})}
-                                    />
+                                    <label style={styles.label}>ชื่อสัตว์เลี้ยง *</label>
+                                    <input style={styles.input} placeholder="ชื่อน้อง" value={newPost.petName} onChange={(e) => setNewPost({...newPost, petName: e.target.value})} />
                                 </div>
-                            )}
-                        </div>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>เพศ</label>
+                                    <select style={styles.select} value={newPost.gender} onChange={(e) => setNewPost({...newPost, gender: e.target.value})}>
+                                        <option value="ชาย">ชาย</option>
+                                        <option value="หญิง">หญิง</option>
+                                        <option value="ไม่ทราบ">ไม่ทราบ</option>
+                                    </select>
+                                </div>
+                                
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>อายุโดยประมาณ</label>
+                                    <input style={styles.input} placeholder="เช่น 2 ปี" value={newPost.age} onChange={(e) => setNewPost({...newPost, age: e.target.value})} />
+                                </div>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>สุขภาพ</label>
+                                    <input style={styles.input} placeholder="เช่น สุขภาพดี" value={newPost.health} onChange={(e) => setNewPost({...newPost, health: e.target.value})} />
+                                </div>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>ที่อยู่ปัจจุบัน</label>
+                                    <input style={styles.input} placeholder="เช่น กรุงเทพฯ" value={newPost.location} onChange={(e) => setNewPost({...newPost, location: e.target.value})} />
+                                </div>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>วิธีการส่งต่อ</label>
+                                    <select style={styles.select} value={newPost.deliveryMethod} onChange={(e) => setNewPost({...newPost, deliveryMethod: e.target.value})}>
+                                        <option value="ไปส่งให้">ไปส่งให้</option>
+                                        <option value="มารับเอง">มารับเอง</option>
+                                        <option value="นัดรับ">นัดรับ</option>
+                                    </select>
+                                </div>
+                                {newPost.deliveryMethod === 'นัดรับ' && (
+                                    <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
+                                    <label style={styles.label}>สถานที่นัดรับ</label>
+                                        <input style={styles.input} placeholder="ระบุสถานที่" value={newPost.meetupPlace} onChange={(e) => setNewPost({...newPost, meetupPlace: e.target.value})} />
+                                    </div>
+                                )}
 
-                        <div style={styles.inputGroup}>
-                            <label style={styles.label}>รายละเอียดเพิ่มเติม *</label>
-                            <textarea 
-                                style={styles.textarea}
-                                placeholder="เล่าเรื่องราวเกี่ยวกับน้องให้คนอื่นได้รู้จัก..."
-                                value={newPost.content}
-                                onChange={(e) => setNewPost({...newPost, content: e.target.value})}
-                            />
-                        </div>
+                                <div style={styles.imageUploadArea} onClick={() => document.getElementById('petImageInput').click()} onMouseOver={(e) => e.currentTarget.style.backgroundColor = colors.formBg} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                    <input type="file" id="petImageInput" hidden accept="image/*" onChange={handleImageChange} />
+                                    {imagePreview ? (
+                                        <div>
+                                            <p style={{ fontSize: '0.8rem', color: colors.primary }}>คลิกเพื่อเปลี่ยนรูป</p>
+                                            <img src={imagePreview} alt="preview" style={styles.previewImg} />
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📸</div>
+                                            <p style={{ fontSize: '0.9rem', color: colors.textSecondary }}>เพิ่มรูปภาพสัตว์เลี้ยง</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
-                        <button style={{...styles.smallBtn, marginTop: '1rem'}} onClick={handleAddPost}>
-                            โพสต์หาบ้าน
-                        </button>
+                            <div style={styles.inputGroup}>
+                                <label style={styles.label}>รายละเอียดเพิ่มเติม *</label>
+                                <textarea style={styles.textarea} placeholder="เล่าเรื่องราวเกี่ยวกับน้อง..." value={newPost.content} onChange={(e) => setNewPost({...newPost, content: e.target.value})} />
+                            </div>
+
+                            <button style={{ ...styles.smallBtn, width: '100%', padding: '1rem', marginTop: '1.5rem', fontSize: '1rem' }} onClick={handleAddPost}>
+                                โพสต์ประกาศ
+                            </button>
+                        </div>
                     </div>
                 )}
 
-                {/* Posts Feed */}
                 {posts.map(post => (
                     <div key={post.id} style={styles.card}>
-                        {post.petImage && (
-                            <img src={post.petImage} alt={post.petName} style={styles.cardImage} />
-                        )}
+                        {post.petImage && <img src={post.petImage} alt={post.petName} style={styles.cardImage} />}
                         <div style={styles.cardBody}>
                             <div style={styles.cardHeader}>
                                 <div>
@@ -514,63 +374,32 @@ const Explore = () => {
                             </div>
 
                             <div style={styles.infoGrid}>
-                                <div style={styles.infoItem}>
-                                    <span style={styles.infoLabel}>เพศ:</span>
-                                    <span style={styles.infoValue}>{post.gender}</span>
-                                </div>
-                                <div style={styles.infoItem}>
-                                    <span style={styles.infoLabel}>อายุ:</span>
-                                    <span style={styles.infoValue}>{post.age}</span>
-                                </div>
-                                <div style={styles.infoItem}>
-                                    <span style={styles.infoLabel}>สุขภาพ:</span>
-                                    <span style={styles.infoValue}>{post.health}</span>
-                                </div>
-                                <div style={styles.infoItem}>
-                                    <span style={styles.infoLabel}>ที่อยู่:</span>
-                                    <span style={styles.infoValue}>{post.location}</span>
-                                </div>
+                                <div style={styles.infoItem}><span style={styles.infoLabel}>เพศ:</span> <span style={styles.infoValue}>{post.gender}</span></div>
+                                <div style={styles.infoItem}><span style={styles.infoLabel}>อายุ:</span> <span style={styles.infoValue}>{post.age}</span></div>
+                                <div style={styles.infoItem}><span style={styles.infoLabel}>สุขภาพ:</span> <span style={styles.infoValue}>{post.health}</span></div>
+                                <div style={styles.infoItem}><span style={styles.infoLabel}>ที่อยู่:</span> <span style={styles.infoValue}>{post.location}</span></div>
                             </div>
 
-                            <div style={{marginBottom: '1rem'}}>
-                                <span style={styles.tag}>{getDeliveryLabel(post.deliveryMethod, post.meetupPlace)}</span>
-                            </div>
+                            <span style={styles.tag}>{getDeliveryLabel(post.deliveryMethod, post.meetupPlace)}</span>
 
                             <p style={styles.content}>{post.content}</p>
 
                             <div style={styles.interactionBar}>
-                                <button 
-                                    style={{
-                                        ...styles.likeBtn,
-                                        color: post.liked ? colors.heartActive : colors.textSecondary,
-                                        transform: post.liked ? 'scale(1.1)' : 'scale(1)'
-                                    }}
-                                    onClick={() => handleLike(post.id)}
-                                >
+                                <button style={{ ...styles.likeBtn, color: post.liked ? colors.heartActive : colors.textSecondary }} onClick={() => handleLike(post.id)}>
                                     {post.liked ? '❤️' : '🤍'} {post.likes}
                                 </button>
-                                <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>
-                                    💬 {post.comments.length} ความคิดเห็น
-                                </span>
+                                <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>💬 {post.comments.length} ความคิดเห็น</span>
                             </div>
 
-                            {/* Comments Section */}
                             <div style={styles.commentSection}>
-                                {post.comments.map(comment => (
-                                    <div key={comment.id} style={styles.comment}>
-                                        <div style={styles.commentAuthor}>{comment.author}</div>
-                                        <div style={styles.commentText}>{comment.text}</div>
+                                {post.comments.map(c => (
+                                    <div key={c.id} style={styles.comment}>
+                                        <div style={styles.commentAuthor}>{c.author}</div>
+                                        <div style={styles.commentText}>{c.text}</div>
                                     </div>
                                 ))}
                                 <div style={styles.commentInput}>
-                                    <input 
-                                        type="text"
-                                        style={styles.commentInputField}
-                                        placeholder="เขียนความคิดเห็น..."
-                                        value={commentText[post.id] || ''}
-                                        onChange={(e) => setCommentText({ ...commentText, [post.id]: e.target.value })}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)}
-                                    />
+                                    <input style={styles.commentInputField} placeholder="เขียนความคิดเห็น..." value={commentText[post.id] || ''} onChange={(e) => setCommentText({...commentText, [post.id]: e.target.value})} onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)} />
                                     <button style={styles.smallBtn} onClick={() => handleAddComment(post.id)}>ส่ง</button>
                                 </div>
                             </div>
@@ -578,6 +407,15 @@ const Explore = () => {
                     </div>
                 ))}
             </main>
+
+            <style>
+                {`
+                    @keyframes modalSlideUp {
+                        from { transform: translateY(20px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                `}
+            </style>
         </div>
     );
 };
