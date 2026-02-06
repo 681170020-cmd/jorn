@@ -325,7 +325,7 @@ const Explore = () => {
                                 </div>
                                 {newPost.deliveryMethod === 'นัดรับ' && (
                                     <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
-                                    <label style={styles.label}>สถานที่นัดรับ</label>
+                                        <label style={styles.label}>สถานที่นัดรับ</label>
                                         <input style={styles.input} placeholder="ระบุสถานที่" value={newPost.meetupPlace} onChange={(e) => setNewPost({...newPost, meetupPlace: e.target.value})} />
                                     </div>
                                 )}
@@ -382,7 +382,31 @@ const Explore = () => {
 
                             <span style={styles.tag}>{getDeliveryLabel(post.deliveryMethod, post.meetupPlace)}</span>
 
-                            <p style={styles.content}>{post.content}</p>
+                            {editingPost === post.id ? (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <textarea 
+                                        style={styles.textarea} 
+                                        defaultValue={post.content} 
+                                        id={`edit-explore-${post.id}`}
+                                    />
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        <button 
+                                            style={styles.smallBtn} 
+                                            onClick={() => handleEditPost(post.id, document.getElementById(`edit-explore-${post.id}`).value)}
+                                        >
+                                            บันทึก
+                                        </button>
+                                        <button 
+                                            style={styles.actionBtn} 
+                                            onClick={() => setEditingPost(null)}
+                                        >
+                                            ยกเลิก
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p style={styles.content}>{post.content}</p>
+                            )}
 
                             <div style={styles.interactionBar}>
                                 <button style={{ ...styles.likeBtn, color: post.liked ? colors.heartActive : colors.textSecondary }} onClick={() => handleLike(post.id)}>

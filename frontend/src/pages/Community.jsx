@@ -41,16 +41,18 @@ const Community = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
     const [commentText, setCommentText] = useState({});
-    const [newPost, setNewPost] = useState({ content: '', image: null, preview: '' });
+    const [imagePreview, setImagePreview] = useState('');
+    const [newPost, setNewPost] = useState({
+        content: '',
+        image: ''
+    });
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setNewPost({
-                ...newPost,
-                image: file,
-                preview: URL.createObjectURL(file)
-            });
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreview(previewUrl);
+            setNewPost({ ...newPost, image: previewUrl });
         }
     };
 
@@ -68,13 +70,14 @@ const Community = () => {
             id: Date.now(),
             author: 'ผู้ใช้งาน',
             content: newPost.content,
-            image: newPost.preview,
+            image: newPost.image,
             likes: 0,
             liked: false,
             comments: []
         };
         setPosts([post, ...posts]);
-        setNewPost({ content: '', image: null, preview: '' });
+        setNewPost({ content: '', image: '' });
+        setImagePreview('');
         setShowForm(false);
     };
 
@@ -138,7 +141,7 @@ const Community = () => {
         commentText: { fontSize: '0.9rem' },
         commentInput: { display: 'flex', gap: '0.5rem', marginTop: '0.5rem' },
         commentInputField: { flex: 1, padding: '0.6rem 1rem', borderRadius: '20px', border: `1px solid ${colors.border}`, fontSize: '0.9rem' },
-        smallBtn: { padding: '0.6rem 1.2rem', borderRadius: '20px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
+        smallBtn: { padding: '0.6rem 1.2rem', borderRadius: '20px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '600', cursor: 'pointer' },
         
         // Modal Styles
         modalOverlay: {
@@ -158,33 +161,35 @@ const Community = () => {
             backgroundColor: 'white',
             borderRadius: '24px',
             width: '90%',
-            maxWidth: '500px',
+            maxWidth: '600px',
             padding: '2rem',
+            maxHeight: '90vh',
+            overflowY: 'auto',
             position: 'relative',
             boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
             animation: 'modalSlideUp 0.3s ease-out'
         },
-        modalTitle: { margin: '0 0 1.5rem', fontSize: '1.5rem', fontWeight: '700' },
-        inputGroup: { marginBottom: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' },
-        label: { fontSize: '0.9rem', fontWeight: '600', color: colors.textSecondary },
-        input: { padding: '0.8rem 1rem', borderRadius: '12px', border: `1px solid ${colors.border}`, fontSize: '1rem', fontFamily: 'inherit' },
-        textarea: { width: '100%', padding: '1rem', borderRadius: '15px', border: `1px solid ${colors.border}`, fontSize: '1rem', resize: 'none', minHeight: '120px', fontFamily: 'inherit' },
+        formTitle: { fontSize: '1.5rem', fontWeight: '700', marginBottom: '1.5rem' },
+        inputGroup: { display: 'flex', flexDirection: 'column', gap: '0.4rem' },
+        label: { fontSize: '0.85rem', fontWeight: '600', color: colors.textSecondary },
+        textarea: { width: '100%', padding: '1rem', borderRadius: '15px', border: `1px solid ${colors.border}`, fontSize: '1rem', resize: 'none', minHeight: '100px', fontFamily: 'inherit' },
         imageUploadArea: {
             border: `2px dashed ${colors.border}`,
             borderRadius: '15px',
             padding: '1.5rem',
             textAlign: 'center',
             cursor: 'pointer',
+            marginBottom: '1.2rem',
             transition: 'background-color 0.2s ease'
         },
         previewImg: {
             width: '100%',
-            maxHeight: '200px',
+            maxHeight: '300px',
             objectFit: 'cover',
             borderRadius: '10px',
             marginTop: '0.5rem'
         },
-        
+
         // FAB Styles
         fab: {
             position: 'fixed',
@@ -238,48 +243,34 @@ const Community = () => {
                                 style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
                             >✕</button>
                             
-                            <h2 style={styles.modalTitle}>สร้างโพสต์ใหม่</h2>
+                            <h2 style={styles.formTitle}>เริ่มต้นการสนทนา</h2>
                             
+                            <div style={styles.imageUploadArea} onClick={() => document.getElementById('communityImageInput').click()} onMouseOver={(e) => e.currentTarget.style.backgroundColor = colors.formBg} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                <input type="file" id="communityImageInput" hidden accept="image/*" onChange={handleImageChange} />
+                                {imagePreview ? (
+                                    <div>
+                                        <p style={{ fontSize: '0.8rem', color: colors.primary }}>คลิกเพื่อเปลี่ยนรูป</p>
+                                        <img src={imagePreview} alt="preview" style={styles.previewImg} />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📸</div>
+                                        <p style={{ fontSize: '0.9rem', color: colors.textSecondary }}>เพิ่มรูปภาพประกอบ (ถ้ามี)</p>
+                                    </div>
+                                )}
+                            </div>
+
                             <div style={styles.inputGroup}>
-                                <label style={styles.label}>รายละเอียด</label>
+                                <label style={styles.label}>ข้อความของคุณ *</label>
                                 <textarea 
                                     style={styles.textarea}
-                                    placeholder="เล่าเรื่องราวหรือสอบถามได้ที่นี่..."
+                                    placeholder="พิมพ์ข้อความที่ต้องการแลกเปลี่ยนหรือสอบถาม..."
                                     value={newPost.content}
-                                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                                    onChange={(e) => setNewPost({...newPost, content: e.target.value})}
                                 />
                             </div>
 
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>รูปภาพ</label>
-                                <div 
-                                    style={styles.imageUploadArea}
-                                    onClick={() => document.getElementById('imageInput').click()}
-                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = colors.formBg}
-                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                    <input 
-                                        type="file" 
-                                        id="imageInput" 
-                                        hidden 
-                                        accept="image/*"
-                                        onChange={handleImageChange}
-                                    />
-                                    {newPost.preview ? (
-                                        <div>
-                                            <p style={{ fontSize: '0.8rem', color: colors.primary }}>คลิกเพื่อเปลี่ยนรูป</p>
-                                            <img src={newPost.preview} alt="preview" style={styles.previewImg} />
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📸</div>
-                                            <p style={{ fontSize: '0.9rem', color: colors.textSecondary }}>เพิ่มรูปภาพประกอบ</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <button style={{ ...styles.smallBtn, width: '100%', padding: '1rem', marginTop: '1rem' }} onClick={handleAddPost}>
+                            <button style={{ ...styles.smallBtn, width: '100%', padding: '1rem', marginTop: '1.5rem', fontSize: '1rem' }} onClick={handleAddPost}>
                                 โพสต์
                             </button>
                         </div>
@@ -298,14 +289,17 @@ const Community = () => {
                                 </div>
                             </div>
 
-                            {editingPost === post.id ? (
-                                <div>
-                                    <textarea style={styles.textarea} defaultValue={post.content} id={`edit-${post.id}`} />
+                        {editingPost === post.id ? (
+                            <div>
+                                <textarea style={styles.textarea} defaultValue={post.content} id={`edit-${post.id}`} />
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                                     <button style={styles.smallBtn} onClick={() => handleEditPost(post.id, document.getElementById(`edit-${post.id}`).value)}>บันทึก</button>
+                                    <button style={styles.actionBtn} onClick={() => setEditingPost(null)}>ยกเลิก</button>
                                 </div>
-                            ) : (
-                                <p style={styles.content}>{post.content}</p>
-                            )}
+                            </div>
+                        ) : (
+                            <p style={styles.content}>{post.content}</p>
+                        )}
 
                             <div style={styles.interactionBar}>
                                 <button 
