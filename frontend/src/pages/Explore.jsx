@@ -31,10 +31,12 @@ const Explore = ({ user, onLoginClick }) => {
             content: 'น้องโมจิเป็นลูกหมาพุดเดิ้ลผสมที่ถูกทิ้งไว้ข้างถนน น้องนิสัยเรียบร้อย ขี้อ้อน และเข้ากับเด็กได้ดีมากค่ะ อยากหาบ้านที่พร้อมดูแลน้องจริงๆ',
             likes: 24,
             liked: false,
+            isAdopted: true,
             comments: [
                 { id: 1, author: 'ปอนด์', text: 'น้องน่ารักมากเลยครับ อยากรับไปเลี้ยงจัง' },
                 { id: 2, author: 'ฟ้า', text: 'เลี้ยงในคอนโดได้ไหมคะ?' }
-            ]
+            ],
+            adoptionRequests: []
         },
         {
             id: 2,
@@ -51,7 +53,9 @@ const Explore = ({ user, onLoginClick }) => {
             content: 'ไทเกอร์เป็นแมวส้มที่ฉลาดมาก ชอบเล่นกับเบ็ดตกแมว อยากได้คนที่มีเวลาเล่นกับน้อง และดูแลน้องในระบบปิดครับ',
             likes: 15,
             liked: false,
-            comments: []
+            isAdopted: false,
+            comments: [],
+            adoptionRequests: []
         }
     ]);
 
@@ -61,6 +65,35 @@ const Explore = ({ user, onLoginClick }) => {
     const [imagePreview, setImagePreview] = useState('');
     const [selectedPostId, setSelectedPostId] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null); // { postId, commentId }
+    const [showAdoptionForm, setShowAdoptionForm] = useState(false);
+    const [adoptionPostId, setAdoptionPostId] = useState(null);
+    const [adoptionData, setAdoptionData] = useState({
+        // 1) User Info
+        fullName: user?.name || '',
+        age: '',
+        phone: user?.phone || '',
+        email: user?.email || '',
+        social: '',
+        // 2) Housing
+        housingType: 'บ้าน',
+        isOwner: 'เจ้าของ',
+        area: '',
+        members: '',
+        consent: 'ทุกคนยินยอม',
+        // 3) Experience
+        hasExperience: 'เคยเลี้ยง',
+        hasOtherPets: 'ไม่มี',
+        knowsVaccine: 'ทราบและเคยพาไป',
+        // 4) Readiness
+        hasTime: 'มีเวลาสม่ำเสมอ',
+        caregiver: 'ตนเอง',
+        canAfford: 'ยอมรับได้',
+        // 5) Reason
+        reason: '',
+        // 6) Terms
+        termsAccepted: false
+    });
+    const [viewingRequestsPostId, setViewingRequestsPostId] = useState(null);
     
     // Find selected post for modal
     const selectedPost = posts.find(p => p.id === selectedPostId);
@@ -116,7 +149,9 @@ const Explore = ({ user, onLoginClick }) => {
             content: newPost.content,
             likes: 0,
             liked: false,
-            comments: []
+            isAdopted: false,
+            comments: [],
+            adoptionRequests: []
         };
         setPosts([post, ...posts]);
         setNewPost({
@@ -144,6 +179,63 @@ const Explore = ({ user, onLoginClick }) => {
             post.id === postId ? { ...post, content: newContent } : post
         ));
         setEditingPost(null);
+    };
+
+    const handleToggleAdopted = (postId) => {
+        setPosts(posts.map(post => 
+            post.id === postId ? { ...post, isAdopted: !post.isAdopted } : post
+        ));
+    };
+
+    const handleAdoptionSubmit = () => {
+        if (!adoptionData.fullName || !adoptionData.phone || !adoptionData.reason || !adoptionData.termsAccepted) {
+            alert('กรุณากรอกข้อมูลที่จำเป็น (*) และยอมรับเงื่อนไข');
+            return;
+        }
+
+        const newRequest = {
+            id: Date.now(),
+            submittedAt: new Date().toLocaleString('th-TH'),
+            status: 'pending',
+            ...adoptionData
+        };
+
+        setPosts(posts.map(post => 
+            post.id === adoptionPostId 
+                ? { ...post, adoptionRequests: [...(post.adoptionRequests || []), newRequest] }
+                : post
+        ));
+
+        alert('ส่งใบสมัครรับเลี้ยงเรียบร้อยแล้ว! เจ้าของโพสต์จะติดต่อกลับหาคุณ');
+        setShowAdoptionForm(false);
+        setAdoptionData({
+            ...adoptionData,
+            age: '',
+            social: '',
+            area: '',
+            members: '',
+            reason: '',
+            termsAccepted: false
+        });
+    };
+
+    const handleSelectApplicant = (postId, requestId) => {
+        setPosts(posts.map(post => {
+            if (post.id !== postId) return post;
+            
+            const updatedRequests = post.adoptionRequests.map(req => ({
+                ...req,
+                status: req.id === requestId ? (req.status === 'selected' ? 'pending' : 'selected') : 'pending'
+            }));
+
+            const hasSelected = updatedRequests.some(req => req.status === 'selected');
+
+            return {
+                ...post,
+                adoptionRequests: updatedRequests,
+                isAdopted: hasSelected
+            };
+        }));
     };
 
     const handleAddComment = (postId, textFromInput) => {
@@ -346,6 +438,29 @@ const Explore = ({ user, onLoginClick }) => {
             color: 'white', 
             fontWeight: '600', 
             cursor: 'pointer' 
+        },
+        adoptedBadge: {
+            backgroundColor: '#2ecc71',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '0.8rem',
+            fontWeight: '800',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            boxShadow: '0 4px 10px rgba(46, 204, 113, 0.2)'
+        },
+        adoptedOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            zIndex: 1,
+            pointerEvents: 'none',
+            borderRadius: '24px'
         },
         
         replyBtn: { 
@@ -585,7 +700,83 @@ const Explore = ({ user, onLoginClick }) => {
             transition: 'transform 0.2s ease, background-color 0.2s ease',
         },
         fabIcon: { fontSize: '24px', fontWeight: '400', lineHeight: 1 },
-        fabText: { fontSize: '0.7rem', fontWeight: '600' }
+        fabText: { fontSize: '0.7rem', fontWeight: '600' },
+
+        // Adoption Form Specific Styles
+        adoptionSection: {
+            marginBottom: '2rem',
+            padding: '1.5rem',
+            backgroundColor: '#fafafa',
+            borderRadius: '20px',
+            border: `1px solid ${colors.border}`
+        },
+        sectionTitle: {
+            fontSize: '1.1rem',
+            fontWeight: '800',
+            color: colors.primary,
+            marginBottom: '1.2rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+        },
+        formGridAdopt: {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '1.2rem'
+        },
+        interestBtn: {
+            padding: '0.6rem 1.5rem',
+            borderRadius: '20px',
+            border: 'none',
+            backgroundColor: colors.primary,
+            color: 'white',
+            fontWeight: '700',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            transition: 'all 0.2s ease',
+            marginLeft: 'auto',
+            boxShadow: '0 4px 12px rgba(139, 94, 60, 0.2)'
+        },
+        viewRequestsBtn: {
+            backgroundColor: '#3498db',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '0.8rem',
+            fontWeight: '700',
+            border: 'none',
+            cursor: 'pointer',
+            marginTop: '0.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+        },
+        requestBadge: {
+            backgroundColor: '#e74c3c',
+            color: 'white',
+            borderRadius: '50%',
+            width: '18px',
+            height: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '0.7rem'
+        },
+        requestCard: {
+            backgroundColor: '#f9f9f9',
+            padding: '1.5rem',
+            borderRadius: '20px',
+            marginBottom: '1rem',
+            border: `1px solid ${colors.border}`
+        },
+        requestHeader: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem',
+            borderBottom: `1px solid ${colors.border}`,
+            paddingBottom: '0.5rem'
+        }
     };
 
     const getDeliveryLabel = (method, place) => {
@@ -718,13 +909,54 @@ const Explore = ({ user, onLoginClick }) => {
                         <div style={styles.contentColumn}>
                             <div style={styles.cardHeader}>
                                 <div>
-                                    <h3 style={styles.petName}>{post.petName}</h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.2rem' }}>
+                                        <h3 style={styles.petName}>{post.petName}</h3>
+                                        {post.isAdopted && (
+                                            <span style={styles.adoptedBadge}>
+                                                ✅ ได้บ้านแล้ว
+                                            </span>
+                                        )}
+                                    </div>
                                     <p style={styles.author}>โดย {post.author}</p>
                                 </div>
                                 {user && user.name === post.author && (
-                                    <div style={styles.actions} onClick={(e) => e.stopPropagation()}>
-                                        <button style={styles.actionBtn} onClick={() => setEditingPost(post.id)}>แก้ไข</button>
-                                        <button style={styles.actionBtn} onClick={() => handleDeletePost(post.id)}>ลบ</button>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                                        <div style={styles.actions} onClick={(e) => e.stopPropagation()}>
+                                            <button style={styles.actionBtn} onClick={() => setEditingPost(post.id)}>แก้ไข</button>
+                                            <button style={styles.actionBtn} onClick={() => handleDeletePost(post.id)}>ลบ</button>
+                                        </div>
+                                        <label 
+                                            style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: '0.4rem', 
+                                                fontSize: '0.8rem', 
+                                                cursor: 'pointer',
+                                                color: post.isAdopted ? '#2ecc71' : colors.textSecondary,
+                                                fontWeight: '600'
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <input 
+                                                type="checkbox" 
+                                                checked={post.isAdopted} 
+                                                onChange={() => handleToggleAdopted(post.id)}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                            {post.isAdopted ? 'ได้บ้านแล้ว' : 'ติ๊กเมื่อได้บ้าน'}
+                                        </label>
+                                        {(post.adoptionRequests && post.adoptionRequests.length > 0) && (
+                                            <button 
+                                                style={styles.viewRequestsBtn}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setViewingRequestsPostId(post.id);
+                                                }}
+                                            >
+                                                📄 ดูใบสมัคร ({post.adoptionRequests.length})
+                                                {post.adoptionRequests.length > 0 && <span style={styles.requestBadge}>new</span>}
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -785,6 +1017,24 @@ const Explore = ({ user, onLoginClick }) => {
                                 >
                                     💬 {post.comments.length} ความคิดเห็น
                                 </button>
+                                {!post.isAdopted && (
+                                    <button 
+                                        style={styles.interestBtn}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!user) {
+                                                onLoginClick();
+                                            } else {
+                                                setAdoptionPostId(post.id);
+                                                setShowAdoptionForm(true);
+                                            }
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                                        onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                    >
+                                        สนใจรับเลี้ยง ✨
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -807,7 +1057,12 @@ const Explore = ({ user, onLoginClick }) => {
                                     )}
                                 </div>
                                 <div style={styles.detailHeaderInfo}>
-                                    <h2 style={styles.detailTitle}>{selectedPost.petName}</h2>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
+                                        <h2 style={styles.detailTitle}>{selectedPost.petName}</h2>
+                                        {selectedPost.isAdopted && (
+                                            <span style={styles.adoptedBadge}>✅ รับเลี้ยงแล้ว</span>
+                                        )}
+                                    </div>
                                     <span style={styles.detailAuthor}>โดย {selectedPost.author}</span>
                                 </div>
                                 {user && user.name === selectedPost.author && (
@@ -820,6 +1075,14 @@ const Explore = ({ user, onLoginClick }) => {
                                             handleDeletePost(selectedPost.id);
                                             setSelectedPostId(null);
                                         }}>ลบ</button>
+                                        {(selectedPost.adoptionRequests && selectedPost.adoptionRequests.length > 0) && (
+                                            <button 
+                                                style={{...styles.viewRequestsBtn, padding: '8px 16px', fontSize: '0.9rem'}}
+                                                onClick={() => setViewingRequestsPostId(selectedPost.id)}
+                                            >
+                                                📄 ดูใบสมัครทั้งหมด ({selectedPost.adoptionRequests.length})
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -862,6 +1125,21 @@ const Explore = ({ user, onLoginClick }) => {
                                 <div style={styles.interactionItem}>
                                     💬 {selectedPost.comments.length} ความคิดเห็น
                                 </div>
+                                {!selectedPost.isAdopted && (
+                                    <button 
+                                        style={{...styles.interestBtn, fontSize: '1rem', padding: '0.8rem 2rem'}}
+                                        onClick={() => {
+                                            if (!user) {
+                                                onLoginClick();
+                                            } else {
+                                                setAdoptionPostId(selectedPost.id);
+                                                setShowAdoptionForm(true);
+                                            }
+                                        }}
+                                    >
+                                        สนใจรับเลี้ยง ✨
+                                    </button>
+                                )}
                             </div>
 
                             <div style={styles.detailCommentArea}>
@@ -953,6 +1231,293 @@ const Explore = ({ user, onLoginClick }) => {
                     </div>
                 </div>
             )}
+
+            {/* Adoption Registration Modal */}
+            {showAdoptionForm && (
+                <div style={styles.modalOverlay} onClick={() => setShowAdoptionForm(false)}>
+                    <div style={{ ...styles.modalCard, maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            onClick={() => setShowAdoptionForm(false)} 
+                            style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
+                        >✕</button>
+
+                        <h2 style={{ ...styles.formTitle, textAlign: 'center', fontSize: '1.8rem' }}>แบบฟอร์มการขอรับเลี้ยงสัตว์</h2>
+                        <p style={{ textAlign: 'center', color: colors.textSecondary, marginBottom: '2rem' }}>
+                            {posts.find(p => p.id === adoptionPostId)?.petName ? `สนใจรับเลี้ยง: ${posts.find(p => p.id === adoptionPostId).petName}` : ''}
+                        </p>
+
+                        <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '1rem' }}>
+                            {/* 1) User Information */}
+                            <div style={styles.adoptionSection}>
+                                <h3 style={styles.sectionTitle}>👤 1) ข้อมูลผู้สมัคร</h3>
+                                <div style={styles.formGridAdopt}>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>ชื่อ – นามสกุล *</label>
+                                        <input style={styles.input} value={adoptionData.fullName} onChange={e => setAdoptionData({...adoptionData, fullName: e.target.value})} />
+                                    </div>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>อายุ *</label>
+                                        <input 
+                                            style={styles.input} 
+                                            type="number" 
+                                            min="0"
+                                            value={adoptionData.age} 
+                                            onChange={e => {
+                                                const val = Math.max(0, parseInt(e.target.value) || 0);
+                                                setAdoptionData({...adoptionData, age: val});
+                                            }} 
+                                        />
+                                    </div>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>เบอร์โทร *</label>
+                                        <input style={styles.input} value={adoptionData.phone} onChange={e => setAdoptionData({...adoptionData, phone: e.target.value})} />
+                                    </div>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>อีเมล *</label>
+                                        <input style={styles.input} type="email" value={adoptionData.email} onChange={e => setAdoptionData({...adoptionData, email: e.target.value})} />
+                                    </div>
+                                    <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
+                                        <label style={styles.label}>Line / Facebook</label>
+                                        <input style={styles.input} placeholder="ระบุช่องทางติดต่อเพิ่มเติม" value={adoptionData.social} onChange={e => setAdoptionData({...adoptionData, social: e.target.value})} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 2) Housing Information */}
+                            <div style={styles.adoptionSection}>
+                                <h3 style={styles.sectionTitle}>🏠 2) ข้อมูลที่อยู่อาศัย</h3>
+                                <div style={styles.formGridAdopt}>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>ลักษณะที่อยู่</label>
+                                        <select style={styles.select} value={adoptionData.housingType} onChange={e => setAdoptionData({...adoptionData, housingType: e.target.value})}>
+                                            <option value="บ้าน">บ้านเดี่ยว/ทาวน์เฮ้าส์</option>
+                                            <option value="คอนโด">คอนโด</option>
+                                            <option value="หอพัก">หอพัก/อพาร์ทเม้นท์</option>
+                                        </select>
+                                    </div>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>สถานะที่พัก</label>
+                                        <select style={styles.select} value={adoptionData.isOwner} onChange={e => setAdoptionData({...adoptionData, isOwner: e.target.value})}>
+                                            <option value="เจ้าของ">บ้านตนเอง</option>
+                                            <option value="เช่า">บ้านเช่า (ระบุว่าเลี้ยงได้)</option>
+                                        </select>
+                                    </div>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>พื้นที่เลี้ยงสัตว์</label>
+                                        <input style={styles.input} placeholder="เช่น มีสวนกว้าง" value={adoptionData.area} onChange={e => setAdoptionData({...adoptionData, area: e.target.value})} />
+                                    </div>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>จำนวนสมาชิกในบ้าน</label>
+                                        <input 
+                                            style={styles.input} 
+                                            type="number" 
+                                            min="1"
+                                            placeholder="เช่น 3 คน" 
+                                            value={adoptionData.members} 
+                                            onChange={e => {
+                                                const val = Math.max(1, parseInt(e.target.value) || 1);
+                                                setAdoptionData({...adoptionData, members: val});
+                                            }} 
+                                        />
+                                    </div>
+                                    <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
+                                        <label style={styles.label}>ทุกคนในบ้านยินยอมความเห็นชอบหรือไม่?</label>
+                                        <select style={styles.select} value={adoptionData.consent} onChange={e => setAdoptionData({...adoptionData, consent: e.target.value})}>
+                                            <option value="ทุกคนยินยอม">ทุกคนยินยอมและรับทราบ</option>
+                                            <option value="บางคน">ยังไม่ได้คุยกับทุกคน</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 3) Experience */}
+                            <div style={styles.adoptionSection}>
+                                <h3 style={styles.sectionTitle}>🐾 3) ประสบการณ์เลี้ยงสัตว์</h3>
+                                <div style={styles.formGridAdopt}>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>เคยเลี้ยงสัตว์มาก่อนหรือไม่?</label>
+                                        <select style={styles.select} value={adoptionData.hasExperience} onChange={e => setAdoptionData({...adoptionData, hasExperience: e.target.value})}>
+                                            <option value="เคยเลี้ยง">เคยเลี้ยง</option>
+                                            <option value="ไม่เคย">ไม่เคย (เป็นครั้งแรก)</option>
+                                        </select>
+                                    </div>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>ตอนนี้มีสัตว์อื่นอยู่หรือเปล่า?</label>
+                                        <select style={styles.select} value={adoptionData.hasOtherPets} onChange={e => setAdoptionData({...adoptionData, hasOtherPets: e.target.value})}>
+                                            <option value="ไม่มี">ไม่มี</option>
+                                            <option value="มี">มี (ระบุในข้อ 5)</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
+                                        <label style={styles.label}>ความเข้าใจเรื่องวัคซีน / ทำหมัน</label>
+                                        <select style={styles.select} value={adoptionData.knowsVaccine} onChange={e => setAdoptionData({...adoptionData, knowsVaccine: e.target.value})}>
+                                            <option value="ทราบและเคยพาไป">ทราบความสำคัญและพร้อมพาไป</option>
+                                            <option value="ยังไม่ค่อยทราบ">ยังไม่แน่ใจเกี่ยวกับค่าใช้จ่ายและระยะเวลา</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 4) Readiness */}
+                            <div style={styles.adoptionSection}>
+                                <h3 style={styles.sectionTitle}>❤️ 4) ความพร้อมในการดูแล</h3>
+                                <div style={styles.formGridAdopt}>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>มีเวลาเลี้ยงดูน้องสม่ำเสมอไหม?</label>
+                                        <select style={styles.select} value={adoptionData.hasTime} onChange={e => setAdoptionData({...adoptionData, hasTime: e.target.value})}>
+                                            <option value="มีเวลาสม่ำเสมอ">มีเวลาคลุกคลีตลอด</option>
+                                            <option value="ทำงานนอกบ้าน">ไปทำงานนอกบ้าน (เช้า-เย็น)</option>
+                                        </select>
+                                    </div>
+                                    <div style={styles.inputGroup}>
+                                        <label style={styles.label}>ใครเป็นคนดูแลหลัก?</label>
+                                        <input style={styles.input} placeholder="เช่น ตนเอง/คุณแม่" value={adoptionData.caregiver} onChange={e => setAdoptionData({...adoptionData, caregiver: e.target.value})} />
+                                    </div>
+                                    <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
+                                        <label style={styles.label}>ยอมรับค่าใช้จ่ายได้ส่วนนี้ได้หรือไม่?</label>
+                                        <select style={styles.select} value={adoptionData.canAfford} onChange={e => setAdoptionData({...adoptionData, canAfford: e.target.value})}>
+                                            <option value="ยอมรับได้">ยอมรับได้ (อาหาร, ค่ารักษาพยาบาลฉุกเฉิน)</option>
+                                            <option value="ค่อนข้างกังวล">ค่อนข้างกังวลกับค่าใช้จ่าย</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 5) Reason */}
+                            <div style={styles.adoptionSection}>
+                                <h3 style={styles.sectionTitle}>📝 5) เหตุผลที่อยากรับเลี้ยง</h3>
+                                <div style={styles.inputGroup}>
+                                    <label style={styles.label}>ทำไมถึงอยากรับเลี้ยงน้องตัวนี้? *</label>
+                                    <textarea 
+                                        style={styles.textarea} 
+                                        placeholder="เขียนเหตุผลสั้นๆ..." 
+                                        value={adoptionData.reason} 
+                                        onChange={e => setAdoptionData({...adoptionData, reason: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 6) Terms */}
+                            <div style={{ ...styles.adoptionSection, backgroundColor: 'rgba(46, 204, 113, 0.05)', borderColor: '#2ecc71' }}>
+                                <h3 style={{ ...styles.sectionTitle, color: '#27ae60' }}>✅ 6) ยอมรับเงื่อนไข</h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', fontSize: '0.95rem' }}>
+                                        <input type="checkbox" checked={adoptionData.termsAccepted} onChange={e => setAdoptionData({...adoptionData, termsAccepted: e.target.checked})} />
+                                        ยินดีดูแลและรับผิดชอบตลอดชีวิต ไม่นำไปทิ้ง
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', fontSize: '0.95rem' }}>
+                                        <input type="checkbox" checked={adoptionData.termsAccepted} readOnly />
+                                        ไม่ปล่อยปละละเลย และให้ความรักความใส่ใจ
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button 
+                            style={{ ...styles.smallBtn, width: '100%', padding: '1.2rem', marginTop: '1.5rem', fontSize: '1.1rem', backgroundColor: '#27ae60' }} 
+                            onClick={handleAdoptionSubmit}
+                        >
+                            ยืนยันการส่งใบสมัคร
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* View Adoption Requests Modal */}
+            {viewingRequestsPostId && (
+                <div style={styles.modalOverlay} onClick={() => setViewingRequestsPostId(null)}>
+                    <div style={{ ...styles.modalCard, maxWidth: '900px', height: '80vh', display: 'flex', flexDirection: 'column' }} onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            onClick={() => setViewingRequestsPostId(null)} 
+                            style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
+                        >✕</button>
+
+                        <h2 style={{ ...styles.formTitle, textAlign: 'center' }}>
+                            ใบสมัครรับเลี้ยง ( {posts.find(p => p.id === viewingRequestsPostId)?.petName} )
+                        </h2>
+
+                        <div style={{ flex: 1, overflowY: 'auto', paddingRight: '1rem', marginTop: '1rem' }}>
+                            {posts.find(p => p.id === viewingRequestsPostId)?.adoptionRequests.map((req, idx) => (
+                                <div key={req.id} style={styles.requestCard}>
+                                    <div style={styles.requestHeader}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                            <div style={{ fontWeight: '800', color: colors.primary, fontSize: '1.1rem' }}>
+                                                # {idx + 1} ผู้สมัคร: {req.fullName}
+                                            </div>
+                                            {req.status === 'selected' && (
+                                                <span style={{ 
+                                                    backgroundColor: '#2ecc71', 
+                                                    color: 'white', 
+                                                    padding: '2px 10px', 
+                                                    borderRadius: '10px', 
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '800'
+                                                }}>
+                                                    ผู้ที่ได้รับเลือก ✨
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
+                                            ส่งเมื่อ: {req.submittedAt}
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', fontSize: '0.95rem' }}>
+                                        <div>
+                                            <p><strong>👤 ข้อมูล:</strong> อายุ {req.age} ปี / โทร: {req.phone} / {req.email}</p>
+                                            <p><strong>🏠 ที่อยู่:</strong> {req.housingType} ({req.isOwner}) / พื้นที่: {req.area}</p>
+                                            <p><strong>👥 สมาชิก:</strong> {req.members} คน ({req.consent})</p>
+                                        </div>
+                                        <div>
+                                            <p><strong>🐾 ประสบการณ์:</strong> {req.hasExperience} / มีสัตว์อื่น: {req.hasOtherPets}</p>
+                                            <p><strong>❤️ ความพร้อม:</strong> {req.hasTime} / ผู้ดูแล: {req.caregiver} / งบ: {req.canAfford}</p>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'white', borderRadius: '12px', border: `1px solid ${colors.border}` }}>
+                                        <p style={{ margin: 0 }}><strong>📝 เหตุผล:</strong> {req.reason}</p>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem', color: '#27ae60', fontWeight: 'bold' }}>
+                                            <span>✅ ยินดีดูแลตลอดชีวิต</span>
+                                            <span>✅ ไม่ทอดทิ้ง</span>
+                                        </div>
+                                        <button 
+                                            style={{
+                                                padding: '8px 16px',
+                                                borderRadius: '12px',
+                                                border: 'none',
+                                                backgroundColor: req.status === 'selected' ? '#2ecc71' : '#f0f0f0',
+                                                color: req.status === 'selected' ? 'white' : colors.textMain,
+                                                fontWeight: '700',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onClick={() => handleSelectApplicant(viewingRequestsPostId, req.id)}
+                                        >
+                                            <input 
+                                                type="checkbox" 
+                                                checked={req.status === 'selected'} 
+                                                readOnly 
+                                                style={{ pointerEvents: 'none' }}
+                                            />
+                                            {req.status === 'selected' ? 'เลือกแล้ว' : 'เลือกคนนี้'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {posts.find(p => p.id === viewingRequestsPostId)?.adoptionRequests.length === 0 && (
+                                <p style={{ textAlign: 'center', marginTop: '3rem', color: colors.textSecondary }}>ยังไม่มีใบสมัครส่งเข้ามา</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             <style>
                 {`

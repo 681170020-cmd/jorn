@@ -150,8 +150,11 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
             fontWeight: '600',
             cursor: 'pointer',
             padding: '0'
-        }
+        },
+
     };
+
+
 
     const handleLoginClick = () => {
         setIsOpen(false);
@@ -183,6 +186,7 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                         style={location.pathname === '/community' ? {...styles.link, ...styles.activeLink} : styles.link} 
                         onClick={() => setIsOpen(false)}
                     >Community</Link>
+
                     
                     {/* Actions inside mobile menu if open */}
                     {isOpen && (

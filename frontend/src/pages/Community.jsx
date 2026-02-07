@@ -57,8 +57,8 @@ const Community = ({ user, onLoginClick }) => {
     const [showForm, setShowForm] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
     const [editImagePreview, setEditImagePreview] = useState('');
-    const [replyingTo, setReplyingTo] = useState(null); // commentId
     const [selectedPostId, setSelectedPostId] = useState(null);
+    const [replyingTo, setReplyingTo] = useState(null); // { postId, commentId }
     const [commentText, setCommentText] = useState({});
     const [imagePreview, setImagePreview] = useState('');
     const [newPost, setNewPost] = useState({
@@ -72,13 +72,17 @@ const Community = ({ user, onLoginClick }) => {
     const handleImageChange = (e, isEdit = false) => {
         const file = e.target.files[0];
         if (file) {
-            const previewUrl = URL.createObjectURL(file);
-            if (isEdit) {
-                setEditImagePreview(previewUrl);
-            } else {
-                setImagePreview(previewUrl);
-                setNewPost({ ...newPost, image: previewUrl });
-            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const previewUrl = reader.result;
+                if (isEdit) {
+                    setEditImagePreview(previewUrl);
+                } else {
+                    setImagePreview(previewUrl);
+                    setNewPost({ ...newPost, image: previewUrl });
+                }
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -167,7 +171,7 @@ const Community = ({ user, onLoginClick }) => {
                         ? { 
                             ...comment, 
                             liked: !comment.liked, 
-                            likes: (comment.liked ? (comment.likes || 0) - 1 : (comment.likes || 0) + 1) 
+                            likes: comment.liked ? comment.likes - 1 : comment.likes + 1 
                         }
                         : comment
                 )
@@ -187,7 +191,14 @@ const Community = ({ user, onLoginClick }) => {
                 ...post,
                 comments: post.comments.map(comment => 
                     comment.id === commentId 
-                        ? { ...comment, replies: [...(comment.replies || []), { id: Date.now(), author: user?.name || 'ผู้ใช้งาน', text }] }
+                        ? { 
+                            ...comment, 
+                            replies: [...comment.replies, { 
+                                id: Date.now(), 
+                                author: user?.name || 'ผู้ใช้งาน', 
+                                text 
+                            }] 
+                        }
                         : comment
                 )
             };
@@ -198,206 +209,104 @@ const Community = ({ user, onLoginClick }) => {
 
     const styles = {
         container: {
-            padding: '100px 2rem 50px',
+            padding: '120px 2rem 50px',
             backgroundColor: colors.bg,
             minHeight: '100vh',
-            width: '100%',
-            fontFamily: "'Outfit', sans-serif",
-            color: colors.textMain,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
+            fontFamily: "'Outfit', sans-serif"
         },
-        header: {
-            textAlign: 'center',
-            marginBottom: '1.5rem',
-            width: '100%',
-            maxWidth: '700px'
-        },
-        title: { fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' },
-        subtitle: { fontSize: '1rem', color: colors.textSecondary },
+        header: { maxWidth: '800px', margin: '0 auto 3rem', textAlign: 'center' },
+        title: { fontSize: '3rem', fontWeight: '800', color: colors.textMain, marginBottom: '0.8rem', letterSpacing: '-1px' },
+        subtitle: { fontSize: '1.2rem', color: colors.textSecondary, fontWeight: '500' },
         
-        // Tabs
-        tabsContainer: {
-            display: 'flex',
-            gap: '1rem',
-            marginBottom: '2rem',
-            backgroundColor: 'white',
-            padding: '0.4rem',
-            borderRadius: '16px',
-            border: `1px solid ${colors.border}`,
-            boxShadow: '0 4px 10px rgba(0,0,0,0.02)'
-        },
+        tabsContainer: { display: 'flex', gap: '0.8rem', justifyContent: 'center', marginBottom: '3rem' },
         tab: {
-            padding: '0.6rem 1.5rem',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontWeight: '700',
-            fontSize: '0.95rem',
-            transition: 'all 0.3s ease',
-            border: 'none',
-            fontFamily: 'inherit'
-        },
-        activeTab: {
-            backgroundColor: colors.primary,
-            color: 'white',
-            boxShadow: '0 4px 12px rgba(139, 94, 60, 0.25)'
-        },
-        inactiveTab: {
-            backgroundColor: 'transparent',
-            color: colors.textSecondary,
-        },
-
-        feed: { width: '100%', maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
-        card: { 
-            backgroundColor: colors.cardBg, 
-            borderRadius: '24px', 
-            border: `1px solid ${colors.border}`, 
-            padding: '1.5rem',
-            display: 'flex',
-            gap: '1rem',
-            width: '100%',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s ease',
-            position: 'relative',
-            cursor: 'pointer'
-        },
-        avatarColumn: {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '48px',
-            minWidth: '48px'
-        },
-        avatarCircle: {
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            backgroundColor: colors.primary,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontWeight: '700',
-            fontSize: '1.2rem',
-            overflow: 'hidden',
-            boxShadow: '0 4px 10px rgba(139, 94, 60, 0.2)'
-        },
-        avatarImg: {
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
-        },
-        contentColumn: {
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: 0
-        },
-        cardHeader: { 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
-            marginBottom: '0.8rem' 
-        },
-        authorInfo: { display: 'flex', flexDirection: 'column' },
-        author: { fontWeight: '700', color: colors.textMain, fontSize: '1.05rem', margin: 0 },
-        handle: { fontSize: '0.85rem', color: colors.textSecondary },
-        actions: { display: 'flex', gap: '0.8rem' },
-        actionBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: colors.textSecondary, transition: 'color 0.2s' },
-        content: { fontSize: '0.98rem', lineHeight: '1.6', marginBottom: '1rem', color: colors.textMain },
-        cardImage: { 
-            width: '100%', 
-            maxHeight: '400px',
-            objectFit: 'cover', 
+            padding: '0.8rem 2rem',
             borderRadius: '16px',
-            marginTop: '0.5rem',
-            marginBottom: '1rem',
-            border: `1px solid ${colors.border}`
+            border: 'none',
+            fontSize: '1rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
         },
-        interactionBar: { 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '1.2rem', 
-            paddingTop: '1rem', 
-            borderTop: `1px solid ${colors.border}`,
-            marginTop: 'auto'
-        },
-        likeBtn: { display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', transition: 'all 0.2s' },
-        commentBtn: { background: 'none', border: 'none', color: colors.textSecondary, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' },
-        
-        commentSection: { marginTop: '1rem', paddingTop: '1rem' },
-        commentItem: { marginBottom: '1.2rem' },
-        commentBubble: { backgroundColor: colors.formBg, borderRadius: '15px', padding: '0.8rem 1.2rem' },
-        commentAuthor: { fontWeight: '700', fontSize: '0.85rem', color: colors.primary, marginBottom: '0.2rem', display: 'block' },
-        commentText: { fontSize: '0.9rem', color: colors.textMain },
-        commentActions: { display: 'flex', gap: '1rem', paddingLeft: '0.5rem', marginTop: '0.4rem' },
-        commentActionBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: colors.textSecondary, fontWeight: '600', padding: 0 },
-        
-        replySection: { marginLeft: '1.5rem', borderLeft: `2px solid ${colors.border}`, paddingLeft: '1rem', marginTop: '0.8rem' },
-        replyItem: { backgroundColor: 'rgba(139, 94, 60, 0.04)', borderRadius: '12px', padding: '0.6rem 1rem', marginBottom: '0.4rem' },
-        replyAuthor: { fontWeight: '700', fontSize: '0.8rem', color: colors.primary, display: 'block' },
-        replyText: { fontSize: '0.85rem', color: colors.textMain },
-        
-        replyInput: { display: 'flex', gap: '0.5rem', marginTop: '0.8rem', marginLeft: '1.5rem' },
+        activeTab: { backgroundColor: colors.primary, color: 'white', transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(139, 94, 60, 0.25)' },
+        inactiveTab: { backgroundColor: colors.cardBg, color: colors.textSecondary },
 
-        commentInput: { display: 'flex', gap: '0.8rem', marginTop: '1rem' },
-        commentInputField: { flex: 1, padding: '0.7rem 1.2rem', borderRadius: '25px', border: `1px solid ${colors.border}`, fontSize: '0.9rem', outline: 'none', transition: 'border-color 0.2s' },
-        smallBtn: { padding: '0.7rem 1.5rem', borderRadius: '25px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '600', cursor: 'pointer', transition: 'opacity 0.2s' },
+        feed: { maxWidth: '700px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
+        card: {
+            backgroundColor: colors.cardBg, padding: '1.8rem', borderRadius: '28px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.04)', border: `1px solid ${colors.border}`,
+            display: 'flex', gap: '1.2rem', cursor: 'pointer', transition: 'all 0.3s ease',
+            position: 'relative', overflow: 'hidden'
+        },
+        avatarColumn: { flexShrink: 0 },
+        avatarCircle: {
+            width: '55px', height: '55px', borderRadius: '50%',
+            backgroundColor: colors.primary, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'white', fontWeight: '700', fontSize: '1.4rem', overflow: 'hidden'
+        },
+        avatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
+        contentColumn: { flex: 1, minWidth: 0 },
+        cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.8rem' },
+        authorInfo: { display: 'flex', flexDirection: 'column' },
+        author: { fontSize: '1.1rem', fontWeight: '800', color: colors.textMain, margin: 0 },
+        handle: { fontSize: '0.9rem', color: colors.textSecondary, fontWeight: '500' },
+        content: { fontSize: '1.05rem', lineHeight: '1.6', color: colors.textMain, marginBottom: '1.2rem', whiteSpace: 'pre-wrap' },
+        cardImage: { width: '100%', borderRadius: '20px', marginBottom: '1.2rem', border: `1px solid ${colors.border}`, maxHeight: '450px', objectFit: 'cover' },
         
-        // Modal Styles
-        modalOverlay: {
-            position: 'fixed',
-            top: 0, left: 0, width: '100%', height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            display: 'flex', justifyContent: 'center', alignItems: 'center',
-            zIndex: 2000, backdropFilter: 'blur(8px)'
-        },
-        modalCard: {
-            backgroundColor: 'white',
-            borderRadius: '30px',
-            width: '90%', maxWidth: '600px',
-            padding: '2.5rem',
-            maxHeight: '85vh', overflowY: 'auto',
-            position: 'relative',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.15)',
-        },
+        interactionBar: { display: 'flex', gap: '2rem', borderTop: `1px solid ${colors.border}`, paddingTop: '1rem' },
+        likeBtn: { display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.95rem', fontWeight: '600', transition: 'all 0.2s' },
+        commentBtn: { display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem', color: colors.textSecondary, fontWeight: '600' },
 
-        // Detail Modal Specific
-        detailModalCard: {
-            backgroundColor: 'white',
-            borderRadius: '32px',
-            width: '95%',
-            maxWidth: '850px',
-            height: '90vh',
-            position: 'relative',
-            overflow: 'hidden',
+        modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: colors.overlay, backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: '1rem' },
+        modalCard: { backgroundColor: 'white', padding: '3rem', borderRadius: '35px', width: '100%', maxWidth: '600px', position: 'relative', boxShadow: '0 25px 50px rgba(0,0,0,0.1)' },
+        
+        detailModalCard: { 
+            backgroundColor: 'white', 
+            borderRadius: '35px', 
+            width: '100%', 
+            maxWidth: '1100px', 
+            height: '85vh',
             display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.2)',
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.1)'
         },
         detailModalScroll: {
-            flex: 1,
+            padding: '3rem',
             overflowY: 'auto',
-            padding: '2.5rem'
+            width: '100%'
         },
         detailCloseBtn: { 
-            position: 'absolute', 
-            top: '1.5rem', 
-            right: '1.5rem', 
-            zIndex: 10,
-            background: 'white',
-            border: `1px solid ${colors.border}`,
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            fontSize: '1.2rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            position: 'absolute', top: '25px', right: '25px', 
+            background: colors.bg, border: 'none', borderRadius: '50%',
+            width: '40px', height: '40px', fontSize: '1.2rem', cursor: 'pointer', 
+            color: colors.textMain, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center'
         },
+        
+        commentSection: { marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: `1px solid ${colors.border}` },
+        commentInput: { display: 'flex', gap: '0.8rem', marginBottom: '2rem' },
+        commentInputField: { flex: 1, padding: '1rem 1.5rem', borderRadius: '15px', border: `1.5px solid ${colors.border}`, outline: 'none', fontSize: '1rem', fontFamily: 'inherit' },
+        smallBtn: { padding: '0.8rem 1.5rem', borderRadius: '12px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem' },
+        
+        commentList: { display: 'flex', flexDirection: 'column', gap: '1.5rem' },
+        commentItem: { display: 'flex', gap: '1rem' },
+        commentAvatar: { width: '40px', height: '40px', borderRadius: '50%', backgroundColor: colors.formBg, flexShrink: 0, overflow: 'hidden' },
+        commentContent: { flex: 1, backgroundColor: colors.bg, padding: '1.2rem', borderRadius: '0 20px 20px 20px' },
+        commentAuthor: { fontSize: '0.95rem', fontWeight: '800', marginBottom: '0.3rem', display: 'block' },
+        commentText: { fontSize: '0.95rem', lineHeight: '1.5', color: colors.textMain },
+        
+        actions: { display: 'flex', gap: '0.8rem' },
+        actionBtn: { background: 'none', border: 'none', color: colors.textSecondary, fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', padding: '0' },
+        
+        replyBtn: { background: 'none', border: 'none', color: colors.primary, fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', padding: '0', marginTop: '0.5rem' },
+        commentLikeBtn: { background: 'none', border: 'none', color: colors.textSecondary, fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', padding: '0', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3rem' },
+        replySection: { marginLeft: '1.5rem', marginTop: '1rem', borderLeft: `2px solid ${colors.border}`, paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' },
+        replyItem: { display: 'flex', gap: '0.8rem' },
+        replyContent: { flex: 1, backgroundColor: colors.bg, padding: '0.8rem 1rem', borderRadius: '0 15px 15px 15px' },
+        replyAuthor: { fontSize: '0.9rem', fontWeight: '800', marginBottom: '0.2rem', display: 'block' },
+        replyText: { fontSize: '0.9rem', lineHeight: '1.4', color: colors.textMain },
+
         detailDescription: {
             fontSize: '1.1rem',
             lineHeight: '1.6',
@@ -429,7 +338,6 @@ const Community = ({ user, onLoginClick }) => {
         },
         previewImg: { width: '100%', maxHeight: '350px', objectFit: 'cover', borderRadius: '12px', marginTop: '0.8rem' },
 
-        // Category Selection in Form
         categoryToggle: {
             display: 'flex',
             gap: '0.5rem',
@@ -453,7 +361,6 @@ const Community = ({ user, onLoginClick }) => {
             color: colors.primary
         },
 
-        // FAB Styles
         fab: {
             position: 'fixed', bottom: '40px', right: '40px',
             backgroundColor: colors.primary, color: 'white',
@@ -742,98 +649,49 @@ const Community = ({ user, onLoginClick }) => {
                                 </div>
                                 <div style={styles.authorInfo}>
                                     <h3 style={styles.author}>{selectedPost.author}</h3>
-                                    <span style={styles.handle}>@{selectedPost.handle}</span>
+                                    <span style={styles.handle}>@{selectedPost.handle || selectedPost.author.toLowerCase().replace(/\s/g, '')}</span>
                                 </div>
                                 {user && user.name === selectedPost.author && (
                                     <div style={{ marginLeft: 'auto', display: 'flex', gap: '1rem' }}>
                                         <button style={styles.actionBtn} onClick={() => {
                                             setEditingPost(selectedPost.id);
-                                            setSelectedPostId(null);
+                                            setEditImagePreview(selectedPost.image || '');
                                         }}>แก้ไข</button>
-                                        <button style={styles.actionBtn} onClick={() => {
-                                            handleDeletePost(selectedPost.id);
-                                            setSelectedPostId(null);
-                                        }}>ลบ</button>
+                                        <button style={styles.actionBtn} onClick={() => handleDeletePost(selectedPost.id)}>ลบ</button>
                                     </div>
                                 )}
                             </div>
 
                             <p style={styles.detailDescription}>{selectedPost.content}</p>
+                            {selectedPost.image && (
+                                <img src={selectedPost.image} alt="post" style={styles.detailLargeImage} />
+                            )}
 
-                            {selectedPost.image && <img src={selectedPost.image} alt="post" style={styles.detailLargeImage} />}
-
-                            <div style={{ ...styles.interactionBar, padding: '1rem 0' }}>
+                            <div style={styles.interactionBar}>
                                 <button 
                                     style={{
                                         ...styles.likeBtn,
                                         color: selectedPost.liked ? colors.heartActive : colors.textSecondary,
                                     }}
-                                    onClick={() => handleLike(selectedPost.id)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleLike(selectedPost.id);
+                                    }}
                                 >
-                                    {selectedPost.liked ? '❤️' : '🤍'} {selectedPost.likes} ไดก์
+                                    {selectedPost.liked ? '❤️' : '🤍'} {selectedPost.likes}
                                 </button>
-                                <span style={{ color: colors.textSecondary, fontSize: '0.95rem' }}>💬 {selectedPost.comments.length} ความคิดเห็น</span>
+                                <div style={styles.commentBtn}>
+                                    <span>💬</span>
+                                    <span>{selectedPost.comments.length} ความคิดเห็น</span>
+                                </div>
                             </div>
 
-                            <div style={{ marginTop: '2rem' }}>
-                                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '1.5rem' }}>ความคิดเห็น</h3>
-                                
-                                {selectedPost.comments.map(comment => (
-                                    <div key={comment.id} style={styles.commentItem}>
-                                        <div style={styles.commentBubble}>
-                                            <span style={styles.commentAuthor}>{comment.author}</span>
-                                            <p style={styles.commentText}>{comment.text}</p>
-                                        </div>
-                                        <div style={styles.commentActions}>
-                                            <button 
-                                                style={{ ...styles.commentActionBtn, color: comment.liked ? colors.heartActive : colors.textSecondary }}
-                                                onClick={() => handleLikeComment(selectedPost.id, comment.id)}
-                                            >
-                                                {comment.liked ? '❤️' : '🤍'} {comment.likes || 0}
-                                            </button>
-                                            <button 
-                                                style={styles.commentActionBtn}
-                                                onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                                            >
-                                                ตอบกลับ
-                                            </button>
-                                        </div>
-
-                                        {comment.replies && comment.replies.length > 0 && (
-                                            <div style={styles.replySection}>
-                                                {comment.replies.map(reply => (
-                                                    <div key={reply.id} style={styles.replyItem}>
-                                                        <span style={styles.replyAuthor}>{reply.author}</span>
-                                                        <p style={styles.replyText}>{reply.text}</p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {replyingTo === comment.id && (
-                                            <div style={styles.replyInput}>
-                                                <input 
-                                                    style={styles.commentInputField} 
-                                                    placeholder="เขียนคำตอบของคุณ..." 
-                                                    value={commentText[`reply-${comment.id}`] || ''}
-                                                    onChange={(e) => setCommentText({ ...commentText, [`reply-${comment.id}`]: e.target.value })}
-                                                    onKeyPress={(e) => {
-                                                        if (e.key === 'Enter') handleReply(selectedPost.id, comment.id, commentText[`reply-${comment.id}`]);
-                                                    }}
-                                                />
-                                                <button 
-                                                    style={styles.smallBtn}
-                                                    onClick={() => handleReply(selectedPost.id, comment.id, commentText[`reply-${comment.id}`])}
-                                                >ส่ง</button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-
-                                <div style={{ ...styles.commentInput, marginTop: '2rem' }}>
+                            <div style={styles.commentSection}>
+                                <h4 style={{ marginBottom: '1.5rem', color: colors.textMain }}>ความคิดเห็น</h4>
+                                <div style={styles.commentInput}>
                                     <input 
                                         style={styles.commentInputField} 
-                                        placeholder="แสดงความคิดเห็น..." 
+                                        placeholder="เขียนความคิดเห็นของคุณ..." 
                                         value={commentText[selectedPost.id] || ''}
                                         onChange={(e) => setCommentText({ ...commentText, [selectedPost.id]: e.target.value })}
                                         onKeyPress={(e) => {
@@ -844,6 +702,72 @@ const Community = ({ user, onLoginClick }) => {
                                         style={styles.smallBtn}
                                         onClick={() => handleAddComment(selectedPost.id)}
                                     >ส่ง</button>
+                                </div>
+
+                                <div style={styles.commentList}>
+                                    {selectedPost.comments.map(comment => (
+                                        <div key={comment.id} style={styles.commentItem}>
+                                            <div style={styles.commentAvatar}>
+                                                <div style={{ ...styles.avatarCircle, width: '40px', height: '40px', fontSize: '1rem', borderRadius: '50%' }}>
+                                                    {comment.author.charAt(0)}
+                                                </div>
+                                            </div>
+                                            <div style={styles.commentContent}>
+                                                <span style={styles.commentAuthor}>{comment.author}</span>
+                                                <p style={styles.commentText}>{comment.text}</p>
+                                                
+                                                <div style={{ display: 'flex', gap: '1.2rem' }}>
+                                                    <button 
+                                                        style={{ ...styles.commentLikeBtn, color: comment.liked ? colors.heartActive : colors.textSecondary }}
+                                                        onClick={() => handleLikeComment(selectedPost.id, comment.id)}
+                                                    >
+                                                        {comment.liked ? '❤️' : '🤍'} {comment.likes}
+                                                    </button>
+                                                    <button 
+                                                        style={styles.replyBtn}
+                                                        onClick={() => setReplyingTo({ postId: selectedPost.id, commentId: comment.id })}
+                                                    >
+                                                        ตอบกลับ
+                                                    </button>
+                                                </div>
+
+                                                {replyingTo?.commentId === comment.id && (
+                                                    <div style={{ ...styles.commentInput, marginTop: '1rem' }}>
+                                                        <input 
+                                                            style={styles.commentInputField} 
+                                                            placeholder="ตอบกลับความคิดเห็น..." 
+                                                            value={commentText[`reply-${comment.id}`] || ''}
+                                                            onChange={(e) => setCommentText({ ...commentText, [`reply-${comment.id}`]: e.target.value })}
+                                                            onKeyPress={(e) => {
+                                                                if (e.key === 'Enter') handleReply(selectedPost.id, comment.id, e.target.value);
+                                                            }}
+                                                            autoFocus
+                                                        />
+                                                        <button 
+                                                            style={styles.smallBtn}
+                                                            onClick={() => handleReply(selectedPost.id, comment.id, commentText[`reply-${comment.id}`] || '')}
+                                                        >ส่ง</button>
+                                                    </div>
+                                                )}
+
+                                                {comment.replies && comment.replies.length > 0 && (
+                                                    <div style={styles.replySection}>
+                                                        {comment.replies.map(reply => (
+                                                            <div key={reply.id} style={styles.replyItem}>
+                                                                <div style={{ ...styles.avatarCircle, width: '30px', height: '30px', fontSize: '0.8rem', borderRadius: '50%' }}>
+                                                                    {reply.author.charAt(0)}
+                                                                </div>
+                                                                <div style={styles.replyContent}>
+                                                                    <span style={styles.replyAuthor}>{reply.author}</span>
+                                                                    <p style={styles.replyText}>{reply.text}</p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>

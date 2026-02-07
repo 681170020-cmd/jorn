@@ -7,9 +7,11 @@ import Community from "./pages/Community";
 import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 
+
 function App() {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [user, setUser] = useState(null);
+
 
     const toggleLogin = () => setIsLoginOpen(!isLoginOpen);
     
