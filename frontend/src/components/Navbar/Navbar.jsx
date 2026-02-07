@@ -198,10 +198,10 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                                             {user.avatar ? (
                                                 <img src={user.avatar} alt="Profile" style={styles.avatarImg} />
                                             ) : (
-                                                user.name.charAt(0)
+                                                (user.name || '?').charAt(0)
                                             )}
                                         </div>
-                                        สวัสดี, {user.name}
+                                        สวัสดี, {user.name || 'ผู้ใช้งาน'}
                                     </Link>
                                     <button style={styles.logoutBtn} onClick={() => { onLogout(); setIsOpen(false); }}>Log out</button>
                                 </>
@@ -226,10 +226,10 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                                     {user.avatar ? (
                                         <img src={user.avatar} alt="Profile" style={styles.avatarImg} />
                                     ) : (
-                                        user.name.charAt(0)
+                                        (user.name || '?').charAt(0)
                                     )}
                                 </div>
-                                <span style={styles.userName}>{user.name}</span>
+                                <span style={styles.userName}>{user.name || 'ผู้ใช้งาน'}</span>
                             </Link>
                             <button style={styles.logoutBtn} onClick={onLogout}>Log out</button>
                         </div>
