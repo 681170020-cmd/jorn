@@ -4,9 +4,9 @@ import { IUser } from "../../../types/user";
 
 export default async function register(data: IUser) {
   try {
-    // 1. เช็คความยาวรหัสผ่าน (ต้องครบ 16 ตัว)
-    if (data.password && data.password.length < 6) {
-      return errRes.BAD_REQUEST({ message: "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร" });
+    // 1. เช็คความยาวรหัสผ่าน (ต้องอย่างน้อย 8 ตัว)
+    if (data.password && data.password.length < 8) {
+      return errRes.BAD_REQUEST({ message: "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร" });
     }
 
     // 2. เช็คตัวอักษรพิมพ์ใหญ่ (ต้องมีอย่างน้อย 1 ตัว)
