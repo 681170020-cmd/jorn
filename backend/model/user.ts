@@ -1,11 +1,18 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
-const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true },
-    password: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now }
-});
+const UserSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true, unique: true }, // ชื่อ
+    password: { type: String, required: true }, // รหัส
+    location: { type: String, required: true }, // ที่อยู่
+    birthday: { type: String, required: true }, // วันเกิด
+    email: { type: String, required: true, unique: true }, // อีเมล
+    phone: { type: String, required: true }, // เบอร์
+  },
+  { timestamps: true, versionKey: false }
+);
 
-export default mongoose.model('User', UserSchema);
+// ไม่ hash password (ตามที่ผู้ใช้ต้องการ)
+
+export default mongoose.model("User", UserSchema);
