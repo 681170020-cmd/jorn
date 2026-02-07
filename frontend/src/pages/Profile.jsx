@@ -106,9 +106,9 @@ const Profile = ({ user, onUpdateUser }) => {
             marginBottom: '2rem'
         },
         infoGrid: {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.2rem',
             textAlign: 'left',
             marginTop: '2rem',
             paddingTop: '2rem',
@@ -173,19 +173,19 @@ const Profile = ({ user, onUpdateUser }) => {
                 <div style={styles.infoGrid}>
                     <div style={styles.infoItem}>
                         <span style={styles.infoLabel}>Email</span>
-                        <span style={styles.infoValue}>{user.email || `${user.name.toLowerCase()}@example.com`}</span>
+                        <span style={styles.infoValue}>{user.email}</span>
                     </div>
                     <div style={styles.infoItem}>
                         <span style={styles.infoLabel}>Phone Number</span>
-                        <span style={styles.infoValue}>{user.phone || 'ไม่ระบุ'}</span>
+                        <span style={styles.infoValue}>{user.phone}</span>
                     </div>
                     <div style={styles.infoItem}>
                         <span style={styles.infoLabel}>Location</span>
-                        <span style={styles.infoValue}>{user.location || 'ไม่ระบุ'}</span>
+                        <span style={styles.infoValue}>{user.location}</span>
                     </div>
                     <div style={styles.infoItem}>
-                        <span style={styles.infoLabel}>Member Since</span>
-                        <span style={styles.infoValue}>February 2026</span>
+                        <span style={styles.infoLabel}>Birthday</span>
+                        <span style={styles.infoValue}>{user.birthday}</span>
                     </div>
                 </div>
 
