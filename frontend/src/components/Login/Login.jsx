@@ -23,7 +23,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setErrorMsg('');
 
@@ -32,8 +32,41 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 setErrorMsg('กรุณากรอกข้อมูลให้ครบถ้วน');
                 return;
             }
-            const userName = email.split('@')[0];
-            onLoginSuccess({ name: userName.charAt(0).toUpperCase() + userName.slice(1) });
+
+            // เรียก API Login
+            try {
+                const response = await fetch('http://localhost:3000/api/user/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMessage = data.error?.message || data.message || 'Email หรือรหัสผ่านไม่ถูกต้อง';
+                    setErrorMsg(errorMessage);
+                    return;
+                }
+
+                // บันทึก token ลง localStorage (ข้อมูลอยู่ใน payload)
+                const { token, user } = data.payload || data;
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+
+                onLoginSuccess({
+                    name: user.username,
+                    email: user.email
+                });
+            } catch (error) {
+                setErrorMsg('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                console.error('Login error:', error);
+            }
         } else {
             if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim() || !phone.trim() || !location.trim() || !birthDay || !birthMonth || !birthYear) {
                 setErrorMsg('กรุณากรอกข้อมูลให้ครบสมบูรณ์ทุกช่อง');
@@ -47,10 +80,10 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 setErrorMsg('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร');
                 return;
             }
-            
+
             // Clean phone number (remove dashes, spaces, etc.)
             const cleanPhone = phone.replace(/\D/g, '');
-            
+
             if (cleanPhone.length < 10) {
                 setErrorMsg('เบอร์โทรศัพท์ขาดกรุณาตรวจสอบอีกครั้ง');
                 return;
@@ -59,13 +92,42 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 setErrorMsg('เบอร์โทรศัพท์เกินกรุณาตรวจสอบอีกครั้ง');
                 return;
             }
-            onLoginSuccess({ 
-                name: name, 
-                email: email,
-                phone: cleanPhone,
-                location: location,
-                birthday: `${birthDay} ${birthMonth} ${birthYear}`
-            });
+            // เรียก API ไปที่ Backend
+            try {
+                const response = await fetch('http://localhost:3000/api/user/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: name,
+                        email: email,
+                        password: password,
+                        phone: cleanPhone,
+                        location: location,
+                        birthday: `${birthDay} ${birthMonth} ${birthYear}`
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMessage = data.error?.message || data.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก';
+                    setErrorMsg(errorMessage);
+                    return;
+                }
+
+                onLoginSuccess({
+                    name: name,
+                    email: email,
+                    phone: cleanPhone,
+                    location: location,
+                    birthday: `${birthDay} ${birthMonth} ${birthYear}`
+                });
+            } catch (error) {
+                setErrorMsg('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                console.error('Register error:', error);
+            }
         }
     };
 
@@ -224,7 +286,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 <button style={styles.closeBtn} onClick={onClose}>✕</button>
                 <div style={styles.logoSection}>
                     <div style={styles.mascotCircle}>
-                        <svg viewBox="0 0 100 100" style={{width: '100%', height: '100%'}}>
+                        <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
                             <path d="M30 65 Q 40 40, 50 65" fill="none" stroke={colors.textMain} strokeWidth="1.5" />
                             <path d="M70 65 Q 60 40, 50 65" fill="none" stroke={colors.textMain} strokeWidth="1.5" />
                             <circle cx="40" cy="55" r="2" fill={colors.textMain} />
@@ -240,9 +302,9 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                         <>
                             <div style={styles.inputWrapper}>
                                 <span style={styles.label}>Name</span>
-                                <input 
-                                    type="text" 
-                                    style={styles.input} 
+                                <input
+                                    type="text"
+                                    style={styles.input}
                                     placeholder="Your Name"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
@@ -250,9 +312,9 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                             </div>
                             <div style={styles.inputWrapper}>
                                 <span style={styles.label}>Phone Number</span>
-                                <input 
-                                    type="tel" 
-                                    style={styles.input} 
+                                <input
+                                    type="tel"
+                                    style={styles.input}
                                     placeholder="0xx-xxx-xxxx"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
@@ -260,9 +322,9 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                             </div>
                             <div style={styles.inputWrapper}>
                                 <span style={styles.label}>Location</span>
-                                <input 
-                                    type="text" 
-                                    style={styles.input} 
+                                <input
+                                    type="text"
+                                    style={styles.input}
                                     placeholder="Province/City"
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
@@ -271,24 +333,24 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                             <div style={styles.inputWrapper}>
                                 <span style={styles.label}>วันเกิด</span>
                                 <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-                                    <select 
-                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 1 }} 
+                                    <select
+                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 1 }}
                                         value={birthDay}
                                         onChange={(e) => setBirthDay(e.target.value)}
                                     >
                                         <option value="">วัน</option>
                                         {days.map(d => <option key={d} value={d}>{d}</option>)}
                                     </select>
-                                    <select 
-                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 2 }} 
+                                    <select
+                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 2 }}
                                         value={birthMonth}
                                         onChange={(e) => setBirthMonth(e.target.value)}
                                     >
                                         <option value="">เดือน</option>
                                         {months.map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
-                                    <select 
-                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 1.5 }} 
+                                    <select
+                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 1.5 }}
                                         value={birthYear}
                                         onChange={(e) => setBirthYear(e.target.value)}
                                     >
@@ -301,9 +363,9 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                     )}
                     <div style={styles.inputWrapper}>
                         <span style={styles.label}>Email</span>
-                        <input 
-                            type="email" 
-                            style={styles.input} 
+                        <input
+                            type="email"
+                            style={styles.input}
                             placeholder="your@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -311,9 +373,9 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                     </div>
                     <div style={styles.inputWrapper}>
                         <span style={styles.label}>Password</span>
-                        <input 
-                            type="password" 
-                            style={styles.input} 
+                        <input
+                            type="password"
+                            style={styles.input}
                             placeholder="********"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -322,9 +384,9 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                     {!isLogin && (
                         <div style={styles.inputWrapper}>
                             <span style={styles.label}>Confirm Password</span>
-                            <input 
-                                type="password" 
-                                style={styles.input} 
+                            <input
+                                type="password"
+                                style={styles.input}
                                 placeholder="********"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -345,7 +407,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                     {isLogin && <a href="#" style={styles.footerLink}>Forgot Password?</a>}
                     <p style={{ ...styles.footerLink, margin: 0 }}>
                         {isLogin ? "Don't have an account? " : "Already have an account? "}
-                        <span 
+                        <span
                             style={{ color: colors.primary, cursor: 'pointer', borderBottom: `1px solid ${colors.primary}` }}
                             onClick={toggleMode}
                         >

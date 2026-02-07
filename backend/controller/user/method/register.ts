@@ -1,6 +1,7 @@
 import { successRes, errRes } from "../../main";
 import User from "../../../model/user";
 import { IUser } from "../../../types/user";
+import bcrypt from 'bcrypt';
 
 export default async function register(data: IUser) {
   try {
@@ -25,13 +26,17 @@ export default async function register(data: IUser) {
       return errRes.BAD_REQUEST({ message: "ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้งานแล้ว" });
     }
 
-    // สร้าง User ใหม่
-    const newUser = await User.create(data);
+    // สร้าง User ใหม่ (ไม่ hash password)
+    const newUser = await User.create({
+      ...data
+    });
     const formatdeta = {
       username: newUser.username,
       password: newUser.password,
       email: newUser.email,
       phone: newUser.phone,
+      location: newUser.location,
+      birthday: newUser.birthday,
       _id: newUser.id,
       success: true
     }
