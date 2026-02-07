@@ -1,45 +1,34 @@
-import { Request, Response } from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import User from "../../../model/user";
+import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import User from '../../../model/user';
 
 export const login = async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
+        const { username, password } = req.body;
 
-        // 1. ตรวจสอบว่ามี User อีเมลนี้อยู่ในระบบไหม
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
-        }
+        // 1. หา User จากฐานข้อมูล
+        const user = await User.findOne({ username });
+        if (!user) return res.status(400).json({ message: "Invalid Username or Password" });
 
-        // 2. ตรวจสอบรหัสผ่าน (เทียบ password ที่ส่งมา กับ hash ใน DB)
-        const isPasswordMatch = await bcrypt.compare(password, user.password);
-        if (!isPasswordMatch) {
-            return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
-        }
+        // 2. เช็ครหัสผ่าน
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ message: "Invalid Username or Password" });
 
-        // 3. สร้าง JWT Token
-        const secret = process.env.JWT_SECRET || "your_fallback_secret";
+        // 3. สร้าง JWT Token (นำไปใช้ใน Middleware auth.ts ที่คุณสร้างไว้)
         const token = jwt.sign(
-            { userId: user._id, email: user.email },
-            secret,
-            { expiresIn: "1d" } // Token หมดอายุใน 1 วัน
+            { id: user._id, username: user.username },
+            process.env.JWT_SECRET || 'your_secret_key',
+            { expiresIn: '1d' }
         );
 
-        // 4. ส่ง Token และข้อมูลเบื้องต้นกลับไปให้ Client
-        return res.status(200).json({
-            message: "เข้าสู่ระบบสำเร็จ",
+        res.status(200).json({
+            message: "Login successful",
             token,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email
-            }
+            user: { username: user.username, email: user.email }
         });
 
     } catch (error) {
-        console.error("Login Error:", error);
-        return res.status(500).json({ message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" });
+        res.status(500).json({ message: "Server Error" });
     }
 };
