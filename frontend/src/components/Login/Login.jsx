@@ -1,10 +1,87 @@
 import { useState } from 'react';
 
-const Login = ({ isOpen, onClose }) => {
+const Login = ({ isOpen, onClose, onLoginSuccess }) => {
+    const [isLogin, setIsLogin] = useState(true);
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [location, setLocation] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [birthDay, setBirthDay] = useState('');
+    const [birthMonth, setBirthMonth] = useState('');
+    const [birthYear, setBirthYear] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
+
+    const days = Array.from({ length: 31 }, (_, i) => i + 1);
+    const months = [
+        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
     if (!isOpen) return null;
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setErrorMsg('');
+
+        if (isLogin) {
+            if (!email.trim() || !password.trim()) {
+                setErrorMsg('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            const userName = email.split('@')[0];
+            onLoginSuccess({ name: userName.charAt(0).toUpperCase() + userName.slice(1) });
+        } else {
+            if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim() || !phone.trim() || !location.trim() || !birthDay || !birthMonth || !birthYear) {
+                setErrorMsg('กรุณากรอกข้อมูลให้ครบสมบูรณ์ทุกช่อง');
+                return;
+            }
+            if (password !== confirmPassword) {
+                setErrorMsg('รหัสผ่านไม่ตรงกัน');
+                return;
+            }
+            if (password.length < 8) {
+                setErrorMsg('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร');
+                return;
+            }
+            
+            // Clean phone number (remove dashes, spaces, etc.)
+            const cleanPhone = phone.replace(/\D/g, '');
+            
+            if (cleanPhone.length < 10) {
+                setErrorMsg('เบอร์โทรศัพท์ขาดกรุณาตรวจสอบอีกครั้ง');
+                return;
+            }
+            if (cleanPhone.length > 10) {
+                setErrorMsg('เบอร์โทรศัพท์เกินกรุณาตรวจสอบอีกครั้ง');
+                return;
+            }
+            onLoginSuccess({ 
+                name: name, 
+                email: email,
+                phone: cleanPhone,
+                location: location,
+                birthday: `${birthDay} ${birthMonth} ${birthYear}`
+            });
+        }
+    };
+
+    const toggleMode = () => {
+        setIsLogin(!isLogin);
+        setErrorMsg('');
+        setName('');
+        setEmail('');
+        setPhone('');
+        setLocation('');
+        setPassword('');
+        setConfirmPassword('');
+        setBirthDay('');
+        setBirthMonth('');
+        setBirthYear('');
+    };
 
     const colors = {
         overlay: 'rgba(61, 43, 31, 0.7)', // Deep Espresso transparent
@@ -35,6 +112,7 @@ const Login = ({ isOpen, onClose }) => {
         card: {
             width: '100%',
             maxWidth: '420px',
+            maxHeight: '90vh',
             backgroundColor: colors.cardBg,
             borderRadius: '40px',
             padding: '2.5rem 2rem',
@@ -44,7 +122,10 @@ const Login = ({ isOpen, onClose }) => {
             alignItems: 'center',
             textAlign: 'center',
             position: 'relative',
-            animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+            overflowY: 'auto',
+            animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            scrollbarWidth: 'none', // Hide scrollbar for clean look
+            msOverflowStyle: 'none'
         },
         closeBtn: {
             position: 'absolute',
@@ -151,10 +232,73 @@ const Login = ({ isOpen, onClose }) => {
                             <circle cx="50" cy="70" r="3" fill={colors.primary} />
                         </svg>
                     </div>
-                    <h1 style={styles.title}>Login</h1>
+                    <h1 style={styles.title}>{isLogin ? 'Login' : 'Sign Up'}</h1>
                 </div>
 
-                <div style={styles.formContainer}>
+                <form style={styles.formContainer} onSubmit={handleSubmit}>
+                    {!isLogin && (
+                        <>
+                            <div style={styles.inputWrapper}>
+                                <span style={styles.label}>Name</span>
+                                <input 
+                                    type="text" 
+                                    style={styles.input} 
+                                    placeholder="Your Name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                            </div>
+                            <div style={styles.inputWrapper}>
+                                <span style={styles.label}>Phone Number</span>
+                                <input 
+                                    type="tel" 
+                                    style={styles.input} 
+                                    placeholder="0xx-xxx-xxxx"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                />
+                            </div>
+                            <div style={styles.inputWrapper}>
+                                <span style={styles.label}>Location</span>
+                                <input 
+                                    type="text" 
+                                    style={styles.input} 
+                                    placeholder="Province/City"
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
+                                />
+                            </div>
+                            <div style={styles.inputWrapper}>
+                                <span style={styles.label}>วันเกิด</span>
+                                <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                                    <select 
+                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 1 }} 
+                                        value={birthDay}
+                                        onChange={(e) => setBirthDay(e.target.value)}
+                                    >
+                                        <option value="">วัน</option>
+                                        {days.map(d => <option key={d} value={d}>{d}</option>)}
+                                    </select>
+                                    <select 
+                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 2 }} 
+                                        value={birthMonth}
+                                        onChange={(e) => setBirthMonth(e.target.value)}
+                                    >
+                                        <option value="">เดือน</option>
+                                        {months.map(m => <option key={m} value={m}>{m}</option>)}
+                                    </select>
+                                    <select 
+                                        style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 1.5 }} 
+                                        value={birthYear}
+                                        onChange={(e) => setBirthYear(e.target.value)}
+                                    >
+                                        <option value="">ปี (ค.ศ.)</option>
+                                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        </>
+                    )}
                     <div style={styles.inputWrapper}>
                         <span style={styles.label}>Email</span>
                         <input 
@@ -175,10 +319,40 @@ const Login = ({ isOpen, onClose }) => {
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
-                    <button style={styles.button}>Login</button>
-                </div>
+                    {!isLogin && (
+                        <div style={styles.inputWrapper}>
+                            <span style={styles.label}>Confirm Password</span>
+                            <input 
+                                type="password" 
+                                style={styles.input} 
+                                placeholder="********"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                        </div>
+                    )}
+                    {errorMsg && (
+                        <p style={{ color: '#e74c3c', fontSize: '0.85rem', fontWeight: '600', margin: '0.5rem 0' }}>
+                            ⚠️ {errorMsg}
+                        </p>
+                    )}
+                    <button type="submit" style={styles.button}>
+                        {isLogin ? 'Login' : 'Create Account'}
+                    </button>
+                </form>
 
-                <a href="#" style={styles.footerLink}>Forgot Password?</a>
+                <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {isLogin && <a href="#" style={styles.footerLink}>Forgot Password?</a>}
+                    <p style={{ ...styles.footerLink, margin: 0 }}>
+                        {isLogin ? "Don't have an account? " : "Already have an account? "}
+                        <span 
+                            style={{ color: colors.primary, cursor: 'pointer', borderBottom: `1px solid ${colors.primary}` }}
+                            onClick={toggleMode}
+                        >
+                            {isLogin ? 'Sign Up' : 'Login'}
+                        </span>
+                    </p>
+                </div>
 
                 <style>
                     {`

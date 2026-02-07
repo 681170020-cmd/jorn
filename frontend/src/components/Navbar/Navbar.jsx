@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
-const Navbar = ({ onLoginClick }) => {
+const Navbar = ({ onLoginClick, user, onLogout }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const location = useLocation();
 
     // Earth Tone Palette
     const colors = {
@@ -63,14 +64,19 @@ const Navbar = ({ onLoginClick }) => {
         link: {
             textDecoration: 'none',
             color: colors.textMuted,
-            fontWeight: '500',
+            fontWeight: '600',
             fontSize: '0.95rem',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '8px',
+            padding: '4px 4px',
+            margin: '0 8px',
             transition: 'all 0.2s ease',
             cursor: 'pointer',
             background: 'none',
-            border: 'none'
+            border: 'none',
+            borderBottom: '3px solid transparent'
+        },
+        activeLink: {
+            color: colors.primary,
+            borderBottom: `3px solid ${colors.primary}`
         },
         mobileLinks: {
             position: 'absolute',
@@ -103,6 +109,47 @@ const Navbar = ({ onLoginClick }) => {
             fontSize: '1.5rem',
             cursor: 'pointer',
             color: colors.textMain
+        },
+        userProfile: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.4rem 0.8rem',
+            borderRadius: '12px',
+            backgroundColor: 'rgba(139, 94, 60, 0.08)',
+            cursor: 'default'
+        },
+        avatar: {
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            backgroundColor: colors.primary,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontWeight: '700',
+            fontSize: '0.85rem',
+            overflow: 'hidden'
+        },
+        avatarImg: {
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+        },
+        userName: {
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            color: colors.textMain
+        },
+        logoutBtn: {
+            background: 'none',
+            border: 'none',
+            color: '#e74c3c',
+            fontSize: '0.85rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            padding: '0'
         }
     };
 
@@ -121,23 +168,74 @@ const Navbar = ({ onLoginClick }) => {
 
                 {/* Desktop Links */}
                 <div style={window.innerWidth > 768 ? styles.links : styles.mobileLinks}>
-                    <Link to="/" style={{...styles.link, color: colors.primary}} onClick={() => setIsOpen(false)}>Home</Link>
-                    <Link to="/explore" style={styles.link} onClick={() => setIsOpen(false)}>หาบ้านให้น้องจร</Link>
-                    <Link to="/community" style={styles.link} onClick={() => setIsOpen(false)}>Community</Link>
+                    <Link 
+                        to="/" 
+                        style={location.pathname === '/' ? {...styles.link, ...styles.activeLink} : styles.link} 
+                        onClick={() => setIsOpen(false)}
+                    >Home</Link>
+                    <Link 
+                        to="/explore" 
+                        style={location.pathname === '/explore' ? {...styles.link, ...styles.activeLink} : styles.link} 
+                        onClick={() => setIsOpen(false)}
+                    >หาบ้านให้น้องจร</Link>
+                    <Link 
+                        to="/community" 
+                        style={location.pathname === '/community' ? {...styles.link, ...styles.activeLink} : styles.link} 
+                        onClick={() => setIsOpen(false)}
+                    >Community</Link>
                     
                     {/* Actions inside mobile menu if open */}
                     {isOpen && (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem'}}>
-                            <button style={styles.link} onClick={handleLoginClick}>Log in</button>
-                            <button style={styles.btnPrimary}>Get Started</button>
+                            {user ? (
+                                <>
+                                    <Link 
+                                        to="/profile" 
+                                        style={{...styles.userName, paddingLeft: '0.75rem', textDecoration: 'none', color: colors.primary, display: 'flex', alignItems: 'center', gap: '0.5rem'}}
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <div style={styles.avatar}>
+                                            {user.avatar ? (
+                                                <img src={user.avatar} alt="Profile" style={styles.avatarImg} />
+                                            ) : (
+                                                user.name.charAt(0)
+                                            )}
+                                        </div>
+                                        สวัสดี, {user.name}
+                                    </Link>
+                                    <button style={styles.logoutBtn} onClick={() => { onLogout(); setIsOpen(false); }}>Log out</button>
+                                </>
+                            ) : (
+                                <button style={styles.link} onClick={handleLoginClick}>Log in</button>
+                            )}
                         </div>
                     )}
                 </div>
 
                 {/* Desktop Actions */}
                 <div style={{...styles.links, display: window.innerWidth > 768 ? 'flex' : 'none'}}>
-                    <button style={styles.link} onClick={onLoginClick}>Log in</button>
-                    <button style={styles.btnPrimary}>Get Started</button>
+                    {user ? (
+                        <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                            <Link 
+                                to="/profile" 
+                                style={{...styles.userProfile, textDecoration: 'none'}}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(139, 94, 60, 0.15)'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(139, 94, 60, 0.08)'}
+                            >
+                                <div style={styles.avatar}>
+                                    {user.avatar ? (
+                                        <img src={user.avatar} alt="Profile" style={styles.avatarImg} />
+                                    ) : (
+                                        user.name.charAt(0)
+                                    )}
+                                </div>
+                                <span style={styles.userName}>{user.name}</span>
+                            </Link>
+                            <button style={styles.logoutBtn} onClick={onLogout}>Log out</button>
+                        </div>
+                    ) : (
+                        <button style={styles.link} onClick={onLoginClick}>Log in</button>
+                    )}
                 </div>
 
                 {/* Mobile Toggle Button */}

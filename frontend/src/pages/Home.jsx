@@ -52,13 +52,16 @@ const Home = () => {
             borderRadius: '24px',
             border: `1px solid ${colors.border}`,
             width: '100%',
-            maxWidth: '500px',
+            maxWidth: '800px',
             overflow: 'hidden',
             boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-            transition: 'transform 0.3s ease'
+            transition: 'transform 0.3s ease',
+            display: 'flex',
+            flexDirection: 'row'
         },
         imageContainer: {
-            width: '100%',
+            width: '350px',
+            minWidth: '350px',
             height: '350px',
             backgroundColor: '#e8e1da',
             display: 'flex',
@@ -70,11 +73,15 @@ const Home = () => {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: 'center' // This centers the face/center of the image
+            objectPosition: 'center'
         },
         cardContent: {
-            padding: '1.5rem',
-            textAlign: 'left'
+            flex: 1,
+            padding: '2rem',
+            textAlign: 'left',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
         },
         cardTitle: {
             fontSize: '1.5rem',

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const Community = () => {
+const Community = ({ user, onLoginClick }) => {
     // Earth Tone Colors
     const colors = {
         bg: '#fdfaf6',
@@ -19,7 +19,9 @@ const Community = () => {
         {
             id: 1,
             author: 'คนรักหมา',
-            image: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?auto=format&fit=crop&q=80&w=800',
+            handle: 'doglover',
+            avatar: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?auto=format&fit=crop&q=80&w=800',
+            image: 'https://images.unsplash.com/photo-1544256718-3bcf237f3974?auto=format&fit=crop&q=80&w=800',
             content: 'น้องหมาที่บ้านไม่ยอมกินข้าวมา 2 วันแล้ว มีใครพอจะแนะนำวิธีได้บ้างคะ? 🐕',
             likes: 5,
             liked: false,
@@ -30,6 +32,8 @@ const Community = () => {
         {
             id: 2,
             author: 'แมวส้ม',
+            handle: 'orange_cat',
+            avatar: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800',
             image: '',
             content: 'แมวที่บ้านเพิ่งคลอดลูก 4 ตัวค่ะ น่ารักมากๆ 🐱💕',
             likes: 12,
@@ -57,6 +61,10 @@ const Community = () => {
     };
 
     const handleLike = (postId) => {
+        if (!user) {
+            onLoginClick();
+            return;
+        }
         setPosts(posts.map(post => 
             post.id === postId 
                 ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
@@ -68,7 +76,9 @@ const Community = () => {
         if (!newPost.content.trim()) return;
         const post = {
             id: Date.now(),
-            author: 'ผู้ใช้งาน',
+            author: user?.name || 'ผู้ใช้งาน',
+            handle: user?.name?.toLowerCase().replace(/\s/g, '') || 'user',
+            avatar: user?.avatar || '',
             content: newPost.content,
             image: newPost.image,
             likes: 0,
@@ -94,11 +104,15 @@ const Community = () => {
     };
 
     const handleAddComment = (postId) => {
+        if (!user) {
+            onLoginClick();
+            return;
+        }
         const text = commentText[postId];
         if (!text?.trim()) return;
         setPosts(posts.map(post => 
             post.id === postId 
-                ? { ...post, comments: [...post.comments, { id: Date.now(), author: 'ผู้ใช้งาน', text }] }
+                ? { ...post, comments: [...post.comments, { id: Date.now(), author: user?.name || 'ผู้ใช้งาน', text }] }
                 : post
         ));
         setCommentText({ ...commentText, [postId]: '' });
@@ -122,26 +136,159 @@ const Community = () => {
             width: '100%',
             maxWidth: '700px'
         },
-        title: { fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' },
-        subtitle: { fontSize: '1rem', color: colors.textSecondary },
-        feed: { width: '100%', maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
-        card: { backgroundColor: colors.cardBg, borderRadius: '20px', border: `1px solid ${colors.border}`, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' },
-        cardBody: { padding: '1.5rem' },
-        cardImage: { width: '100%', height: '300px', objectFit: 'cover', display: 'block' },
-        cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' },
-        author: { fontWeight: '700', color: colors.primary },
-        actions: { display: 'flex', gap: '0.5rem' },
-        actionBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: colors.textSecondary },
-        content: { fontSize: '1rem', lineHeight: '1.6', marginBottom: '1rem' },
-        interactionBar: { display: 'flex', alignItems: 'center', gap: '1.5rem', paddingTop: '1rem', borderTop: `1px solid ${colors.border}` },
-        likeBtn: { display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem' },
-        commentSection: { marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${colors.border}` },
-        comment: { backgroundColor: colors.formBg, borderRadius: '12px', padding: '0.8rem 1rem', marginBottom: '0.5rem' },
-        commentAuthor: { fontWeight: '600', fontSize: '0.85rem', color: colors.primary },
-        commentText: { fontSize: '0.9rem' },
-        commentInput: { display: 'flex', gap: '0.5rem', marginTop: '0.5rem' },
-        commentInputField: { flex: 1, padding: '0.6rem 1rem', borderRadius: '20px', border: `1px solid ${colors.border}`, fontSize: '0.9rem' },
-        smallBtn: { padding: '0.6rem 1.2rem', borderRadius: '20px', border: 'none', backgroundColor: colors.primary, color: 'white', fontWeight: '600', cursor: 'pointer' },
+        card: { 
+            backgroundColor: colors.cardBg, 
+            borderRadius: '24px', 
+            border: `1px solid ${colors.border}`, 
+            padding: '1.5rem',
+            display: 'flex',
+            gap: '1rem',
+            width: '100%',
+            transition: 'all 0.2s ease'
+        },
+        avatarColumn: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '48px',
+            minWidth: '48px'
+        },
+        avatarCircle: {
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            backgroundColor: colors.primary,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: '700',
+            fontSize: '1.2rem',
+            overflow: 'hidden'
+        },
+        avatarImg: {
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+        },
+        contentColumn: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0 // Prevent overflow
+        },
+        cardHeader: { 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '0.4rem' 
+        },
+        author: { 
+            fontWeight: '700', 
+            color: colors.textMain,
+            fontSize: '1rem'
+        },
+        authorHandle: {
+            color: colors.textSecondary,
+            fontSize: '0.9rem',
+            fontWeight: '400',
+            marginLeft: '0.4rem'
+        },
+        postImage: { 
+            width: '100%', 
+            maxHeight: '400px',
+            objectFit: 'cover', 
+            borderRadius: '16px',
+            marginTop: '0.8rem',
+            border: `1px solid ${colors.border}`
+        },
+        cardBody: { 
+            padding: 0
+        },
+        cardContent: {
+            fontSize: '1rem',
+            lineHeight: '1.5',
+            color: colors.textMain,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+        },
+        actions: { display: 'flex', gap: '0.8rem' },
+        actionBtn: { 
+            background: 'none', 
+            border: 'none', 
+            cursor: 'pointer', 
+            fontSize: '0.8rem', 
+            color: colors.textSecondary,
+            opacity: 0.7,
+            padding: 0
+        },
+        interactionBar: { 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '1.2rem', 
+            padding: '0.8rem 0',
+            borderTop: `1px solid ${colors.border}`,
+            borderBottom: `1px solid ${colors.border}`,
+            marginTop: '1rem'
+        },
+        interactionItem: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            color: colors.textSecondary,
+            fontSize: '0.9rem',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0
+        },
+        commentSection: { 
+            marginTop: '1rem'
+        },
+        comment: { 
+            backgroundColor: '#f5f0eb', 
+            borderRadius: '16px', 
+            padding: '1rem 1.2rem', 
+            marginBottom: '0.8rem' 
+        },
+        commentAuthor: { 
+            fontWeight: '700', 
+            fontSize: '0.9rem', 
+            color: colors.primary,
+            marginBottom: '0.2rem'
+        },
+        commentText: { 
+            fontSize: '0.95rem',
+            color: colors.textMain,
+            lineHeight: '1.5'
+        },
+        commentInput: { 
+            display: 'flex', 
+            gap: '0.5rem', 
+            marginTop: '1rem',
+            backgroundColor: colors.cardBg,
+            padding: '0.5rem',
+            borderRadius: '24px',
+            border: `1px solid ${colors.border}`
+        },
+        commentInputField: { 
+            flex: 1, 
+            padding: '0.6rem 1.2rem', 
+            borderRadius: '20px', 
+            border: 'none', 
+            fontSize: '0.95rem',
+            backgroundColor: 'transparent',
+            outline: 'none'
+        },
+        smallBtn: { 
+            padding: '0.6rem 1.2rem', 
+            borderRadius: '20px', 
+            border: 'none', 
+            backgroundColor: colors.primary, 
+            color: 'white', 
+            fontWeight: '600', 
+            cursor: 'pointer' 
+        },
         
         // Modal Styles
         modalOverlay: {
@@ -226,7 +373,13 @@ const Community = () => {
                 {/* Floating Action Button */}
                 <button 
                     style={styles.fab} 
-                    onClick={() => setShowForm(true)}
+                    onClick={() => {
+                        if (!user) {
+                            onLoginClick();
+                        } else {
+                            setShowForm(true);
+                        }
+                    }}
                     onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
                     onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                 >
@@ -279,40 +432,58 @@ const Community = () => {
 
                 {posts.map(post => (
                     <div key={post.id} style={styles.card}>
-                        {post.image && <img src={post.image} alt="post" style={styles.cardImage} />}
-                        <div style={styles.cardBody}>
+                        <div style={styles.avatarColumn}>
+                            <div style={styles.avatarCircle}>
+                                {post.avatar ? (
+                                    <img src={post.avatar} alt={post.author} style={styles.avatarImg} />
+                                ) : (
+                                    post.author.charAt(0)
+                                )}
+                            </div>
+                        </div>
+                        <div style={styles.contentColumn}>
                             <div style={styles.cardHeader}>
-                                <span style={styles.author}>{post.author}</span>
-                                <div style={styles.actions}>
-                                    <button style={styles.actionBtn} onClick={() => setEditingPost(post.id)}>แก้ไข</button>
-                                    <button style={styles.actionBtn} onClick={() => handleDeletePost(post.id)}>ลบ</button>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <span style={styles.author}>{post.author}</span>
+                                    <span style={styles.authorHandle}>@{post.handle || post.author.toLowerCase().replace(/\s/g, '')}</span>
                                 </div>
+                                {user && user.name === post.author && (
+                                    <div style={styles.actions}>
+                                        <button style={styles.actionBtn} onClick={() => setEditingPost(post.id)}>แก้ไข</button>
+                                        <button style={styles.actionBtn} onClick={() => handleDeletePost(post.id)}>ลบ</button>
+                                    </div>
+                                )}
                             </div>
 
-                        {editingPost === post.id ? (
-                            <div>
-                                <textarea style={styles.textarea} defaultValue={post.content} id={`edit-${post.id}`} />
-                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                    <button style={styles.smallBtn} onClick={() => handleEditPost(post.id, document.getElementById(`edit-${post.id}`).value)}>บันทึก</button>
-                                    <button style={styles.actionBtn} onClick={() => setEditingPost(null)}>ยกเลิก</button>
+                            {editingPost === post.id ? (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <textarea style={styles.textarea} defaultValue={post.content} id={`edit-${post.id}`} />
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        <button style={styles.smallBtn} onClick={() => handleEditPost(post.id, document.getElementById(`edit-${post.id}`).value)}>บันทึก</button>
+                                        <button style={styles.actionBtn} onClick={() => setEditingPost(null)}>ยกเลิก</button>
+                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <p style={styles.content}>{post.content}</p>
-                        )}
+                            ) : (
+                                <p style={styles.cardContent}>{post.content}</p>
+                            )}
+
+                            {post.image && (
+                                <img src={post.image} alt="post" style={styles.postImage} />
+                            )}
 
                             <div style={styles.interactionBar}>
                                 <button 
                                     style={{
-                                        ...styles.likeBtn,
-                                        color: post.liked ? colors.heartActive : colors.textSecondary,
-                                        transform: post.liked ? 'scale(1.1)' : 'scale(1)'
+                                        ...styles.interactionItem,
+                                        color: post.liked ? colors.heartActive : colors.textSecondary
                                     }}
                                     onClick={() => handleLike(post.id)}
                                 >
                                     {post.liked ? '❤️' : '🤍'} {post.likes}
                                 </button>
-                                <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>💬 {post.comments.length} ความคิดเห็น</span>
+                                <div style={styles.interactionItem}>
+                                    💬 {post.comments.length} ความคิดเห็น
+                                </div>
                             </div>
 
                             <div style={styles.commentSection}>
