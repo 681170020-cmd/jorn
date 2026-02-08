@@ -1,45 +1,42 @@
-import { Request, Response } from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { successRes, errRes } from "../../main";
 import User from "../../../model/user";
+import jwt from 'jsonwebtoken';
 
-export const login = async (req: Request, res: Response) => {
+interface LoginData {
+    email: string;
+    password: string;
+}
+
+export default async function login(data: LoginData) {
     try {
-        const { email, password } = req.body;
+        const { email, password } = data;
 
-        // 1. ตรวจสอบว่ามี User อีเมลนี้อยู่ในระบบไหม
+        // 1. หา User จากฐานข้อมูล
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+            return errRes.BAD_REQUEST({ message: "Invalid Email or Password" });
         }
 
-        // 2. ตรวจสอบรหัสผ่าน (เทียบ password ที่ส่งมา กับ hash ใน DB)
-        const isPasswordMatch = await bcrypt.compare(password, user.password);
-        if (!isPasswordMatch) {
-            return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+        // 2. เช็ครหัสผ่าน (เปรียบเทียบตรงๆ เพราะไม่ได้ hash)
+        const isMatch = password === user.password;
+        if (!isMatch) {
+            return errRes.BAD_REQUEST({ message: "Invalid Email or Password" });
         }
 
         // 3. สร้าง JWT Token
-        const secret = process.env.JWT_SECRET || "your_fallback_secret";
         const token = jwt.sign(
-            { userId: user._id, email: user.email },
-            secret,
-            { expiresIn: "1d" } // Token หมดอายุใน 1 วัน
+            { id: user._id, email: user.email },
+            process.env.JWT_SECRET || 'your_secret_key',
+            { expiresIn: '1d' }
         );
 
-        // 4. ส่ง Token และข้อมูลเบื้องต้นกลับไปให้ Client
-        return res.status(200).json({
-            message: "เข้าสู่ระบบสำเร็จ",
+        return successRes({
+            message: "Login successful",
             token,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email
-            }
+            user: { username: user.username, email: user.email }
         });
 
-    } catch (error) {
-        console.error("Login Error:", error);
-        return res.status(500).json({ message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" });
+    } catch (error: any) {
+        return errRes.INTERNAL_SERVER_ERROR({ message: error.message });
     }
-};
+}
