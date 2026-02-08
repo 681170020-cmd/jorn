@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const Explore = ({ user, onLoginClick }) => {
+const Explore = ({ user, onLoginClick, posts, setPosts }) => {
     // Earth Tone Colors
     const colors = {
         bg: '#fdfaf6',
@@ -15,51 +15,7 @@ const Explore = ({ user, onLoginClick }) => {
         overlay: 'rgba(61, 43, 31, 0.4)'
     };
 
-    // Sample initial posts for "Find Home" feature
-    const [posts, setPosts] = useState([
-        {
-            id: 1,
-            petName: 'Mochi (โมจิ)',
-            petType: 'หมา',
-            author: 'แม่นุ่น',
-            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=800',
-            gender: 'หญิง',
-            age: '3 เดือน',
-            health: 'ฉีดวัคซีนแล้ว',
-            location: 'กรุงเทพฯ',
-            deliveryMethod: 'ไปส่งให้',
-            petImage: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&q=80&w=800',
-            content: 'น้องโมจิเป็นลูกหมาพุดเดิ้ลผสมที่ถูกทิ้งไว้ข้างถนน น้องนิสัยเรียบร้อย ขี้อ้อน และเข้ากับเด็กได้ดีมากค่ะ อยากหาบ้านที่พร้อมดูแลน้องจริงๆ',
-            likes: 24,
-            liked: false,
-            isAdopted: true,
-            comments: [
-                { id: 1, author: 'ปอนด์', text: 'น้องน่ารักมากเลยครับ อยากรับไปเลี้ยงจัง' },
-                { id: 2, author: 'ฟ้า', text: 'เลี้ยงในคอนโดได้ไหมคะ?' }
-            ],
-            adoptionRequests: []
-        },
-        {
-            id: 2,
-            petName: 'Tiger (ไทเกอร์)',
-            petType: 'แมว',
-            author: 'กอล์ฟ',
-            avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800',
-            gender: 'ชาย',
-            age: '1 ปี',
-            health: 'ทำหมันแล้ว',
-            location: 'นนทบุรี',
-            deliveryMethod: 'นัดรับ',
-            meetupPlace: 'เซ็นทรัล เวสต์เกต',
-            petImage: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800',
-            content: 'ไทเกอร์เป็นแมวส้มที่ฉลาดมาก ชอบเล่นกับเบ็ดตกแมว อยากได้คนที่มีเวลาเล่นกับน้อง และดูแลน้องในระบบปิดครับ',
-            likes: 15,
-            liked: false,
-            isAdopted: false,
-            comments: [],
-            adoptionRequests: []
-        }
-    ]);
+    // (Sample posts state removed and moved to App.jsx)
 
     const [showForm, setShowForm] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
@@ -115,6 +71,25 @@ const Explore = ({ user, onLoginClick }) => {
         content: ''
     });
 
+    const [filterType, setFilterType] = useState('ทั้งหมด');
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredPosts = posts.filter(post => {
+        const matchesType = filterType === 'ทั้งหมด' || post.petType === filterType;
+        
+        // For 'อื่นๆ' category, search across multiple fields
+        if (filterType === 'อื่นๆ' && searchTerm) {
+            const search = searchTerm.toLowerCase();
+            const matchesPetType = post.petType && post.petType.toLowerCase().includes(search);
+            const matchesPetName = post.petName && post.petName.toLowerCase().includes(search);
+            const matchesContent = post.content && post.content.toLowerCase().includes(search);
+            const matchesLocation = post.location && post.location.toLowerCase().includes(search);
+            return matchesPetType || matchesPetName || matchesContent || matchesLocation;
+        }
+        
+        return matchesType;
+    });
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -155,7 +130,8 @@ const Explore = ({ user, onLoginClick }) => {
             liked: false,
             isAdopted: false,
             comments: [],
-            adoptionRequests: []
+            adoptionRequests: [],
+            createdAt: new Date().toLocaleString('th-TH')
         };
         setPosts([post, ...posts]);
         setNewPost({
@@ -784,6 +760,43 @@ const Explore = ({ user, onLoginClick }) => {
             marginBottom: '1rem',
             borderBottom: `1px solid ${colors.border}`,
             paddingBottom: '0.5rem'
+        },
+        filterContainer: {
+            display: 'flex',
+            gap: '0.8rem',
+            marginBottom: '1.5rem',
+            overflowX: 'auto',
+            padding: '0.5rem',
+            width: '100%',
+            maxWidth: '800px',
+            justifyContent: 'center'
+        },
+        filterBtn: (isActive) => ({
+            padding: '0.6rem 1.2rem',
+            borderRadius: '20px',
+            border: isActive ? `2px solid ${colors.primary}` : `1px solid ${colors.border}`,
+            backgroundColor: isActive ? 'rgba(139, 94, 60, 0.1)' : 'white',
+            color: isActive ? colors.primary : colors.textSecondary,
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            transition: 'all 0.2s ease',
+            whiteSpace: 'nowrap'
+        }),
+        searchContainer: {
+            width: '100%',
+            maxWidth: '800px',
+            marginBottom: '1.5rem'
+        },
+        searchInput: {
+            width: '100%',
+            padding: '0.8rem 1.5rem',
+            borderRadius: '24px',
+            border: `2px solid ${colors.border}`,
+            fontSize: '1rem',
+            outline: 'none',
+            transition: 'border-color 0.2s ease',
+            backgroundColor: 'white'
         }
     };
 
@@ -796,10 +809,7 @@ const Explore = ({ user, onLoginClick }) => {
 
     return (
         <div style={styles.container}>
-            <header style={styles.header}>
-                <h1 style={styles.title}>หาบ้านให้น้องจร</h1>
-                <p style={styles.subtitle}>พื้นที่สำหรับประกาศหาบ้านใหม่และช่วยเหลือสัตว์เลี้ยงที่ต้องการความรัก</p>
-            </header>
+            {/* Header section removed */}
 
             {/* Filter Section */}
             <div style={styles.filterContainer}>
@@ -976,7 +986,10 @@ const Explore = ({ user, onLoginClick }) => {
                                             </span>
                                         )}
                                     </div>
-                                    <p style={styles.author}>โดย {post.author}</p>
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <p style={styles.author}>โดย {post.author}</p>
+                                            <span style={{ fontSize: '0.75rem', color: colors.textSecondary }}>• {post.createdAt || 'เมื่อสักครู่'}</span>
+                                        </div>
                                 </div>
                                 {user && user.name === post.author && (
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
