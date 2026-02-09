@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const Community = ({ user, onLoginClick }) => {
+const Community = ({ user, onLoginClick, posts, setPosts }) => {
     // Earth Tone Colors
     const colors = {
         bg: '#fdfaf6',
@@ -18,41 +18,7 @@ const Community = ({ user, onLoginClick }) => {
     const [activeTab, setActiveTab] = useState('general'); // 'general' or 'knowledge'
 
     // Sample initial posts
-    const [posts, setPosts] = useState([
-        {
-            id: 1,
-            author: 'คนรักหมา',
-            handle: 'doglover',
-            category: 'general',
-            avatar: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?auto=format&fit=crop&q=80&w=800',
-            image: 'https://images.unsplash.com/photo-1544256718-3bcf237f3974?auto=format&fit=crop&q=80&w=800',
-            content: 'น้องหมาที่บ้านไม่ยอมกินข้าวมา 2 วันแล้ว มีใครพอจะแนะนำวิธีได้บ้างคะ? 🐕',
-            likes: 5,
-            liked: false,
-            comments: [
-                { 
-                    id: 1, 
-                    author: 'หมอเจ', 
-                    text: 'ลองเปลี่ยนอาหารหรือพาไปหาหมอครับ อาจมีปัญหาสุขภาพ',
-                    likes: 2,
-                    liked: false,
-                    replies: []
-                }
-            ]
-        },
-        {
-            id: 2,
-            author: 'แมวส้ม',
-            handle: 'orange_cat',
-            category: 'knowledge',
-            avatar: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800',
-            image: '',
-            content: 'รู้หรือไม่? แมวสื่อสารกับเราผ่านการกระพริบตาช้าๆ ซึ่งหมายถึงการบอกรักนั่นเอง 🐱💕',
-            likes: 12,
-            liked: false,
-            comments: []
-        }
-    ]);
+    // (Sample posts state removed and moved to App.jsx)
 
     const [showForm, setShowForm] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
@@ -110,7 +76,8 @@ const Community = ({ user, onLoginClick }) => {
             image: newPost.image,
             likes: 0,
             liked: false,
-            comments: []
+            comments: [],
+            createdAt: new Date().toLocaleString('th-TH')
         };
         setPosts([post, ...posts]);
         setNewPost({ content: '', image: '', category: 'general' });
@@ -218,19 +185,34 @@ const Community = ({ user, onLoginClick }) => {
         title: { fontSize: '3rem', fontWeight: '800', color: colors.textMain, marginBottom: '0.8rem', letterSpacing: '-1px' },
         subtitle: { fontSize: '1.2rem', color: colors.textSecondary, fontWeight: '500' },
         
-        tabsContainer: { display: 'flex', gap: '0.8rem', justifyContent: 'center', marginBottom: '3rem' },
-        tab: {
-            padding: '0.8rem 2rem',
-            borderRadius: '16px',
-            border: 'none',
-            fontSize: '1rem',
-            fontWeight: '700',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+        tabsContainer: { 
+            display: 'flex', 
+            gap: '0.8rem', 
+            justifyContent: 'center', 
+            marginBottom: '2rem',
+            overflowX: 'auto',
+            padding: '0.5rem',
+            width: '100%',
+            maxWidth: '800px',
+            margin: '0 auto'
         },
-        activeTab: { backgroundColor: colors.primary, color: 'white', transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(139, 94, 60, 0.25)' },
-        inactiveTab: { backgroundColor: colors.cardBg, color: colors.textSecondary },
+        tab: (isActive) => ({
+            padding: '0.6rem 1.5rem',
+            borderRadius: '20px',
+            border: isActive ? `2px solid ${colors.primary}` : `1px solid ${colors.border}`,
+            backgroundColor: isActive ? 'rgba(139, 94, 60, 0.08)' : 'white',
+            color: isActive ? colors.primary : colors.textSecondary,
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '0.95rem',
+            transition: 'all 0.2s ease',
+            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+        }),
+        activeTab: {}, // No longer needed as it's handled by the functional tab style
+        inactiveTab: {},
 
         feed: { maxWidth: '700px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
         card: {
@@ -345,20 +327,26 @@ const Community = ({ user, onLoginClick }) => {
         },
         categoryBtn: {
             flex: 1,
-            padding: '0.8rem',
-            borderRadius: '12px',
-            border: `1px solid ${colors.border}`,
+            padding: '1rem',
+            borderRadius: '15px',
+            border: `2px solid ${colors.border}`,
             cursor: 'pointer',
-            fontWeight: '600',
-            fontSize: '0.9rem',
-            transition: 'all 0.2s ease',
+            fontWeight: '700',
+            fontSize: '1rem',
+            transition: 'all 0.3s ease',
             backgroundColor: 'white',
-            color: colors.textSecondary
+            color: colors.textSecondary,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
         },
         categoryBtnActive: {
-            backgroundColor: colors.formBg,
+            backgroundColor: 'rgba(139, 94, 60, 0.08)',
             borderColor: colors.primary,
-            color: colors.primary
+            color: colors.primary,
+            transform: 'scale(1.02)',
+            boxShadow: '0 4px 12px rgba(139, 94, 60, 0.1)'
         },
 
         fab: {
@@ -378,21 +366,18 @@ const Community = ({ user, onLoginClick }) => {
 
     return (
         <div style={styles.container}>
-            <header style={styles.header}>
-                <h1 style={styles.title}>Community</h1>
-                <p style={styles.subtitle}>แลกเปลี่ยนข้อมูล สอบถามอาการ และปัญหาสุขภาพสัตว์เลี้ยง</p>
-            </header>
+            {/* Header section removed */}
 
             {/* Category Tabs */}
             <div style={styles.tabsContainer}>
                 <button 
-                    style={{ ...styles.tab, ...(activeTab === 'general' ? styles.activeTab : styles.inactiveTab) }}
+                    style={styles.tab(activeTab === 'general')}
                     onClick={() => setActiveTab('general')}
                 >
                     ทั่วไป
                 </button>
                 <button 
-                    style={{ ...styles.tab, ...(activeTab === 'knowledge' ? styles.activeTab : styles.inactiveTab) }}
+                    style={styles.tab(activeTab === 'knowledge')}
                     onClick={() => setActiveTab('knowledge')}
                 >
                     สาระ
@@ -439,13 +424,13 @@ const Community = ({ user, onLoginClick }) => {
                                         style={{ ...styles.categoryBtn, ...(newPost.category === 'general' ? styles.categoryBtnActive : {}) }}
                                         onClick={() => setNewPost({ ...newPost, category: 'general' })}
                                     >
-                                        ทั่วไป
+                                        <span>🐾</span> ทั่วไป
                                     </button>
                                     <button 
                                         style={{ ...styles.categoryBtn, ...(newPost.category === 'knowledge' ? styles.categoryBtnActive : {}) }}
                                         onClick={() => setNewPost({ ...newPost, category: 'knowledge' })}
                                     >
-                                        สาระ
+                                        <span>💡</span> สาระ
                                     </button>
                                 </div>
                             </div>
@@ -508,7 +493,10 @@ const Community = ({ user, onLoginClick }) => {
                             <div style={styles.cardHeader}>
                                 <div style={styles.authorInfo}>
                                     <h3 style={styles.author}>{post.author}</h3>
-                                    <span style={styles.handle}>@{post.handle || post.author.toLowerCase().replace(/\s/g, '')}</span>
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                        <span style={styles.handle}>@{post.handle || post.author.toLowerCase().replace(/\s/g, '')}</span>
+                                        <span style={{ fontSize: '0.75rem', color: colors.textSecondary }}>• {post.createdAt || 'เมื่อสักครู่'}</span>
+                                    </div>
                                 </div>
                                 {user && user.name === post.author && (
                                     <div style={styles.actions} onClick={(e) => e.stopPropagation()}>
@@ -649,7 +637,10 @@ const Community = ({ user, onLoginClick }) => {
                                 </div>
                                 <div style={styles.authorInfo}>
                                     <h3 style={styles.author}>{selectedPost.author}</h3>
-                                    <span style={styles.handle}>@{selectedPost.handle || selectedPost.author.toLowerCase().replace(/\s/g, '')}</span>
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                        <span style={styles.handle}>@{selectedPost.handle || selectedPost.author.toLowerCase().replace(/\s/g, '')}</span>
+                                        <span style={{ fontSize: '0.75rem', color: colors.textSecondary }}>• {selectedPost.createdAt || 'เมื่อสักครู่'}</span>
+                                    </div>
                                 </div>
                                 {user && user.name === selectedPost.author && (
                                     <div style={{ marginLeft: 'auto', display: 'flex', gap: '1rem' }}>

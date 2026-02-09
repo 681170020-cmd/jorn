@@ -172,22 +172,15 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                 {/* Desktop Links */}
                 <div style={window.innerWidth > 768 ? styles.links : styles.mobileLinks}>
                     <Link 
-                        to="/" 
-                        style={location.pathname === '/' ? {...styles.link, ...styles.activeLink} : styles.link} 
-                        onClick={() => setIsOpen(false)}
-                    >Home</Link>
-                    <Link 
                         to="/explore" 
-                        style={location.pathname === '/explore' ? {...styles.link, ...styles.activeLink} : styles.link} 
+                        style={location.pathname === '/' || location.pathname === '/explore' ? {...styles.link, ...styles.activeLink} : styles.link} 
                         onClick={() => setIsOpen(false)}
-                    >หาบ้านให้น้องจร</Link>
+                    >Adopt</Link>
                     <Link 
                         to="/community" 
                         style={location.pathname === '/community' ? {...styles.link, ...styles.activeLink} : styles.link} 
                         onClick={() => setIsOpen(false)}
-                    >Community</Link>
-
-                    
+                    >Community</Link>                    
                     {/* Actions inside mobile menu if open */}
                     {isOpen && (
                         <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem'}}>
@@ -216,10 +209,25 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                     )}
                 </div>
 
-                {/* Desktop Actions */}
                 <div style={{...styles.links, display: window.innerWidth > 768 ? 'flex' : 'none'}}>
                     {user ? (
                         <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                            <Link 
+                                to="/chat" 
+                                style={{
+                                    fontSize: '1.5rem',
+                                    textDecoration: 'none',
+                                    padding: '0.4rem',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s ease',
+                                    backgroundColor: location.pathname === '/chat' ? 'rgba(139, 94, 60, 0.15)' : 'transparent'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(139, 94, 60, 0.15)'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = location.pathname === '/chat' ? 'rgba(139, 94, 60, 0.15)' : 'transparent'}
+                            >💬</Link>
                             <Link 
                                 to="/profile" 
                                 style={{...styles.userProfile, textDecoration: 'none'}}
