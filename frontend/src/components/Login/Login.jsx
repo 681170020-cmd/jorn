@@ -21,6 +21,10 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
+    const getBirthMonthIndex = (monthName) => {
+        return months.indexOf(monthName);
+    };
+
     if (!isOpen) return null;
 
     const handleSubmit = async (e) => {
@@ -35,7 +39,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
 
             // เรียก API Login
             try {
-                const response = await fetch('http://localhost:3000/api/user/login', {
+                const response = await fetch('https://jorn.onrender.com/api/user/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -81,6 +85,21 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 return;
             }
 
+            // ตรวจสอบอายุ (ต้องมากกว่าหรือเท่ากับ 15 ปี)
+            const birthMonthIndex = getBirthMonthIndex(birthMonth);
+            const birthDate = new Date(parseInt(birthYear), birthMonthIndex, parseInt(birthDay));
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            if (age < 15) {
+                setErrorMsg('ผู้สมัครต้องมีอายุอย่างน้อย 15 ปี');
+                return;
+            }
+
             // Clean phone number (remove dashes, spaces, etc.)
             const cleanPhone = phone.replace(/\D/g, '');
 
@@ -94,7 +113,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
             }
             // เรียก API ไปที่ Backend
             try {
-                const response = await fetch('http://localhost:3000/api/user/register', {
+                const response = await fetch('https://jorn.onrender.com/api/user/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
