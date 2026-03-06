@@ -3,6 +3,8 @@ import config from "./config";
 import { cors } from "./middleware";
 import { connectDB } from "./database";
 import userRouter from "./routers/user";
+import petRouter from "./routers/post";
+import kratuRouter from "./routers/kratu";
 
 const app = express();
 
@@ -11,7 +13,8 @@ app.use(cors);
 app.use(express.json());
 
 app.use("/api/user", userRouter);
-
+app.use("/api/post", petRouter);
+app.use("/api/kratu",kratuRouter);
 // Connect to database
 connectDB();
 

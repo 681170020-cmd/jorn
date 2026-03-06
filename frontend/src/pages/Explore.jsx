@@ -61,10 +61,10 @@ const Explore = ({ user, onLoginClick }) => {
     const [imagePreview, setImagePreview] = useState('');
     const [selectedPostId, setSelectedPostId] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null); // { postId, commentId }
-    
+
     // Find selected post for modal
     const selectedPost = posts.find(p => p.id === selectedPostId);
-    
+
     // New post form state
     const [newPost, setNewPost] = useState({
         petName: '',
@@ -92,8 +92,8 @@ const Explore = ({ user, onLoginClick }) => {
             onLoginClick();
             return;
         }
-        setPosts(posts.map(post => 
-            post.id === postId 
+        setPosts(posts.map(post =>
+            post.id === postId
                 ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
                 : post
         ));
@@ -140,7 +140,7 @@ const Explore = ({ user, onLoginClick }) => {
 
     const handleEditPost = (postId, newContent) => {
         if (!newContent.trim()) return;
-        setPosts(posts.map(post => 
+        setPosts(posts.map(post =>
             post.id === postId ? { ...post, content: newContent } : post
         ));
         setEditingPost(null);
@@ -153,16 +153,18 @@ const Explore = ({ user, onLoginClick }) => {
         }
         const text = textFromInput || commentText[postId];
         if (!text?.trim()) return;
-        setPosts(posts.map(post => 
-            post.id === postId 
-                ? { ...post, comments: [...post.comments, { 
-                    id: Date.now(), 
-                    author: user?.name || 'ผู้ใช้งาน', 
-                    text,
-                    likes: 0,
-                    liked: false,
-                    replies: []
-                }] }
+        setPosts(posts.map(post =>
+            post.id === postId
+                ? {
+                    ...post, comments: [...post.comments, {
+                        id: Date.now(),
+                        author: user?.name || 'ผู้ใช้งาน',
+                        text,
+                        likes: 0,
+                        liked: false,
+                        replies: []
+                    }]
+                }
                 : post
         ));
         setCommentText({ ...commentText, [postId]: '' });
@@ -177,12 +179,12 @@ const Explore = ({ user, onLoginClick }) => {
             if (post.id !== postId) return post;
             return {
                 ...post,
-                comments: post.comments.map(comment => 
-                    comment.id === commentId 
-                        ? { 
-                            ...comment, 
-                            liked: !comment.liked, 
-                            likes: (comment.liked ? (comment.likes || 0) - 1 : (comment.likes || 0) + 1) 
+                comments: post.comments.map(comment =>
+                    comment.id === commentId
+                        ? {
+                            ...comment,
+                            liked: !comment.liked,
+                            likes: (comment.liked ? (comment.likes || 0) - 1 : (comment.likes || 0) + 1)
                         }
                         : comment
                 )
@@ -200,8 +202,8 @@ const Explore = ({ user, onLoginClick }) => {
             if (post.id !== postId) return post;
             return {
                 ...post,
-                comments: post.comments.map(comment => 
-                    comment.id === commentId 
+                comments: post.comments.map(comment =>
+                    comment.id === commentId
                         ? { ...comment, replies: [...(comment.replies || []), { id: Date.now(), author: user?.name || 'ผู้ใช้งาน', text }] }
                         : comment
                 )
@@ -227,10 +229,10 @@ const Explore = ({ user, onLoginClick }) => {
         title: { fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' },
         subtitle: { fontSize: '1rem', color: colors.textSecondary },
         feed: { width: '100%', maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '1.5rem' },
-        card: { 
-            backgroundColor: colors.cardBg, 
-            borderRadius: '24px', 
-            border: `1px solid ${colors.border}`, 
+        card: {
+            backgroundColor: colors.cardBg,
+            borderRadius: '24px',
+            border: `1px solid ${colors.border}`,
             padding: '1.5rem',
             display: 'flex',
             gap: '1rem',
@@ -270,10 +272,10 @@ const Explore = ({ user, onLoginClick }) => {
             flexDirection: 'column',
             minWidth: 0
         },
-        cardImage: { 
-            width: '100%', 
+        cardImage: {
+            width: '100%',
             maxHeight: '400px',
-            objectFit: 'cover', 
+            objectFit: 'cover',
             borderRadius: '16px',
             marginTop: '1rem',
             border: `1px solid ${colors.border}`
@@ -286,13 +288,13 @@ const Explore = ({ user, onLoginClick }) => {
         infoItem: { display: 'flex', flexDirection: 'column', gap: '2px' },
         infoLabel: { fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em' },
         infoValue: { fontSize: '0.9rem', fontWeight: '600', color: colors.textMain },
-        tag: { 
-            display: 'inline-block', 
-            padding: '4px 12px', 
-            backgroundColor: 'rgba(139, 94, 60, 0.08)', 
-            color: colors.primary, 
-            borderRadius: '20px', 
-            fontSize: '0.8rem', 
+        tag: {
+            display: 'inline-block',
+            padding: '4px 12px',
+            backgroundColor: 'rgba(139, 94, 60, 0.08)',
+            color: colors.primary,
+            borderRadius: '20px',
+            fontSize: '0.8rem',
             fontWeight: '600',
             width: 'fit-content'
         },
@@ -303,95 +305,95 @@ const Explore = ({ user, onLoginClick }) => {
         commentBtn: { display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: colors.textSecondary },
         actions: { display: 'flex', gap: '0.8rem' },
         actionBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: colors.textSecondary, opacity: 0.6 },
-        comment: { 
-            backgroundColor: '#f5f0eb', 
-            borderRadius: '16px', 
-            padding: '1rem 1.2rem', 
-            marginBottom: '0.8rem' 
+        comment: {
+            backgroundColor: '#f5f0eb',
+            borderRadius: '16px',
+            padding: '1rem 1.2rem',
+            marginBottom: '0.8rem'
         },
-        commentAuthor: { 
-            fontWeight: '700', 
-            fontSize: '0.9rem', 
+        commentAuthor: {
+            fontWeight: '700',
+            fontSize: '0.9rem',
             color: colors.primary,
             marginBottom: '0.2rem'
         },
-        commentText: { 
+        commentText: {
             fontSize: '0.95rem',
             color: colors.textMain,
             lineHeight: '1.5'
         },
-        commentInput: { 
-            display: 'flex', 
-            gap: '0.5rem', 
+        commentInput: {
+            display: 'flex',
+            gap: '0.5rem',
             marginTop: '1rem',
             backgroundColor: 'white',
             padding: '0.5rem',
             borderRadius: '24px',
             border: `1px solid ${colors.border}`
         },
-        commentInputField: { 
-            flex: 1, 
-            padding: '0.6rem 1.2rem', 
-            borderRadius: '20px', 
-            border: 'none', 
+        commentInputField: {
+            flex: 1,
+            padding: '0.6rem 1.2rem',
+            borderRadius: '20px',
+            border: 'none',
             fontSize: '0.95rem',
             backgroundColor: 'transparent',
             outline: 'none'
         },
-        smallBtn: { 
-            padding: '0.6rem 1.2rem', 
-            borderRadius: '20px', 
-            border: 'none', 
-            backgroundColor: colors.primary, 
-            color: 'white', 
-            fontWeight: '600', 
-            cursor: 'pointer' 
+        smallBtn: {
+            padding: '0.6rem 1.2rem',
+            borderRadius: '20px',
+            border: 'none',
+            backgroundColor: colors.primary,
+            color: 'white',
+            fontWeight: '600',
+            cursor: 'pointer'
         },
-        
-        replyBtn: { 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer', 
-            fontSize: '0.85rem', 
-            fontWeight: '600', 
-            color: colors.primary, 
+
+        replyBtn: {
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            fontWeight: '600',
+            color: colors.primary,
             marginTop: '0.6rem',
             padding: 0
         },
-        commentLikeBtn: { 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer', 
-            fontSize: '0.85rem', 
-            color: colors.textSecondary, 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.2rem', 
+        commentLikeBtn: {
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            color: colors.textSecondary,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.2rem',
             marginTop: '0.6rem',
             padding: 0
         },
-        replySection: { 
-            marginLeft: '1.5rem', 
-            paddingLeft: '1rem', 
-            borderLeft: `2px solid ${colors.border}`, 
-            marginTop: '0.8rem' 
+        replySection: {
+            marginLeft: '1.5rem',
+            paddingLeft: '1rem',
+            borderLeft: `2px solid ${colors.border}`,
+            marginTop: '0.8rem'
         },
-        replyItem: { 
-            backgroundColor: 'rgba(139, 94, 60, 0.04)', 
-            borderRadius: '12px', 
-            padding: '0.8rem 1rem', 
-            marginBottom: '0.5rem' 
+        replyItem: {
+            backgroundColor: 'rgba(139, 94, 60, 0.04)',
+            borderRadius: '12px',
+            padding: '0.8rem 1rem',
+            marginBottom: '0.5rem'
         },
-        replyAuthor: { 
-            fontWeight: '700', 
-            fontSize: '0.85rem', 
-            color: colors.primary 
+        replyAuthor: {
+            fontWeight: '700',
+            fontSize: '0.85rem',
+            color: colors.primary
         },
-        replyText: { 
+        replyText: {
             fontSize: '0.9rem',
             color: colors.textMain
         },
-        
+
         detailModalOverlay: {
             position: 'fixed',
             top: 0,
@@ -449,10 +451,10 @@ const Explore = ({ user, onLoginClick }) => {
             display: 'flex',
             gap: '1rem'
         },
-        detailCloseBtn: { 
-            position: 'absolute', 
-            top: '1.5rem', 
-            right: '1.5rem', 
+        detailCloseBtn: {
+            position: 'absolute',
+            top: '1.5rem',
+            right: '1.5rem',
             zIndex: 10,
             background: 'white',
             border: `1px solid ${colors.border}`,
@@ -503,8 +505,8 @@ const Explore = ({ user, onLoginClick }) => {
             borderRadius: '24px',
             margin: '1.5rem 0'
         },
-        detailCommentArea: { 
-            marginTop: '2rem' 
+        detailCommentArea: {
+            marginTop: '2rem'
         },
         detailCommentTitle: {
             fontSize: '1.2rem',
@@ -604,8 +606,8 @@ const Explore = ({ user, onLoginClick }) => {
 
             <main style={styles.feed}>
                 {/* Floating Action Button */}
-                <button 
-                    style={styles.fab} 
+                <button
+                    style={styles.fab}
                     onClick={() => {
                         if (!user) {
                             onLoginClick();
@@ -624,42 +626,42 @@ const Explore = ({ user, onLoginClick }) => {
                 {showForm && (
                     <div style={styles.modalOverlay} onClick={() => setShowForm(false)}>
                         <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-                            <button 
-                                onClick={() => setShowForm(false)} 
+                            <button
+                                onClick={() => setShowForm(false)}
                                 style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
                             >✕</button>
-                            
+
                             <h2 style={styles.formTitle}>ประกาศหาบ้าน</h2>
-                            
+
                             <div style={styles.formGrid}>
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>ชื่อสัตว์เลี้ยง *</label>
-                                    <input style={styles.input} placeholder="ชื่อน้อง" value={newPost.petName} onChange={(e) => setNewPost({...newPost, petName: e.target.value})} />
+                                    <input style={styles.input} placeholder="ชื่อน้อง" value={newPost.petName} onChange={(e) => setNewPost({ ...newPost, petName: e.target.value })} />
                                 </div>
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>เพศ</label>
-                                    <select style={styles.select} value={newPost.gender} onChange={(e) => setNewPost({...newPost, gender: e.target.value})}>
+                                    <select style={styles.select} value={newPost.gender} onChange={(e) => setNewPost({ ...newPost, gender: e.target.value })}>
                                         <option value="ชาย">ชาย</option>
                                         <option value="หญิง">หญิง</option>
                                         <option value="ไม่ทราบ">ไม่ทราบ</option>
                                     </select>
                                 </div>
-                                
+
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>อายุโดยประมาณ</label>
-                                    <input style={styles.input} placeholder="เช่น 2 ปี" value={newPost.age} onChange={(e) => setNewPost({...newPost, age: e.target.value})} />
+                                    <input style={styles.input} placeholder="เช่น 2 ปี" value={newPost.age} onChange={(e) => setNewPost({ ...newPost, age: e.target.value })} />
                                 </div>
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>สุขภาพ</label>
-                                    <input style={styles.input} placeholder="เช่น สุขภาพดี" value={newPost.health} onChange={(e) => setNewPost({...newPost, health: e.target.value})} />
+                                    <input style={styles.input} placeholder="เช่น สุขภาพดี" value={newPost.health} onChange={(e) => setNewPost({ ...newPost, health: e.target.value })} />
                                 </div>
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>ที่อยู่ปัจจุบัน</label>
-                                    <input style={styles.input} placeholder="เช่น กรุงเทพฯ" value={newPost.location} onChange={(e) => setNewPost({...newPost, location: e.target.value})} />
+                                    <input style={styles.input} placeholder="เช่น กรุงเทพฯ" value={newPost.location} onChange={(e) => setNewPost({ ...newPost, location: e.target.value })} />
                                 </div>
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>วิธีการส่งต่อ</label>
-                                    <select style={styles.select} value={newPost.deliveryMethod} onChange={(e) => setNewPost({...newPost, deliveryMethod: e.target.value})}>
+                                    <select style={styles.select} value={newPost.deliveryMethod} onChange={(e) => setNewPost({ ...newPost, deliveryMethod: e.target.value })}>
                                         <option value="ไปส่งให้">ไปส่งให้</option>
                                         <option value="มารับเอง">มารับเอง</option>
                                         <option value="นัดรับ">นัดรับ</option>
@@ -668,7 +670,7 @@ const Explore = ({ user, onLoginClick }) => {
                                 {newPost.deliveryMethod === 'นัดรับ' && (
                                     <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
                                         <label style={styles.label}>สถานที่นัดรับ</label>
-                                        <input style={styles.input} placeholder="ระบุสถานที่" value={newPost.meetupPlace} onChange={(e) => setNewPost({...newPost, meetupPlace: e.target.value})} />
+                                        <input style={styles.input} placeholder="ระบุสถานที่" value={newPost.meetupPlace} onChange={(e) => setNewPost({ ...newPost, meetupPlace: e.target.value })} />
                                     </div>
                                 )}
 
@@ -690,7 +692,7 @@ const Explore = ({ user, onLoginClick }) => {
 
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>รายละเอียดเพิ่มเติม *</label>
-                                <textarea style={styles.textarea} placeholder="เล่าเรื่องราวเกี่ยวกับน้อง..." value={newPost.content} onChange={(e) => setNewPost({...newPost, content: e.target.value})} />
+                                <textarea style={styles.textarea} placeholder="เล่าเรื่องราวเกี่ยวกับน้อง..." value={newPost.content} onChange={(e) => setNewPost({ ...newPost, content: e.target.value })} />
                             </div>
 
                             <button style={{ ...styles.smallBtn, width: '100%', padding: '1rem', marginTop: '1.5rem', fontSize: '1rem' }} onClick={handleAddPost}>
@@ -701,9 +703,9 @@ const Explore = ({ user, onLoginClick }) => {
                 )}
 
                 {posts.map(post => (
-                    <div 
-                        key={post.id} 
-                        style={styles.card} 
+                    <div
+                        key={post.id}
+                        style={styles.card}
                         onClick={() => setSelectedPostId(post.id)}
                     >
                         <div style={styles.avatarColumn}>
@@ -731,20 +733,20 @@ const Explore = ({ user, onLoginClick }) => {
 
                             {editingPost === post.id ? (
                                 <div style={{ marginBottom: '1rem' }}>
-                                    <textarea 
-                                        style={styles.textarea} 
-                                        defaultValue={post.content} 
+                                    <textarea
+                                        style={styles.textarea}
+                                        defaultValue={post.content}
                                         id={`edit-explore-${post.id}`}
                                     />
                                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
-                                        <button 
-                                            style={styles.smallBtn} 
+                                        <button
+                                            style={styles.smallBtn}
                                             onClick={() => handleEditPost(post.id, document.getElementById(`edit-explore-${post.id}`).value)}
                                         >
                                             บันทึก
                                         </button>
-                                        <button 
-                                            style={styles.actionBtn} 
+                                        <button
+                                            style={styles.actionBtn}
                                             onClick={() => setEditingPost(null)}
                                         >
                                             ยกเลิก
@@ -767,8 +769,8 @@ const Explore = ({ user, onLoginClick }) => {
                             {post.petImage && <img src={post.petImage} alt={post.petName} style={styles.cardImage} />}
 
                             <div style={styles.interactionBar}>
-                                <button 
-                                    style={{ ...styles.likeBtn, color: post.liked ? colors.heartActive : colors.textSecondary }} 
+                                <button
+                                    style={{ ...styles.likeBtn, color: post.liked ? colors.heartActive : colors.textSecondary }}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleLike(post.id);
@@ -776,7 +778,7 @@ const Explore = ({ user, onLoginClick }) => {
                                 >
                                     {post.liked ? '❤️' : '🤍'} {post.likes}
                                 </button>
-                                <button 
+                                <button
                                     style={styles.commentBtn}
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -796,7 +798,7 @@ const Explore = ({ user, onLoginClick }) => {
                 <div style={styles.detailModalOverlay} onClick={() => setSelectedPostId(null)}>
                     <div style={styles.detailModalCard} onClick={(e) => e.stopPropagation()}>
                         <button style={styles.detailCloseBtn} onClick={() => setSelectedPostId(null)}>✕</button>
-                        
+
                         <div style={styles.detailModalScroll}>
                             <div style={styles.detailHeader}>
                                 <div style={styles.avatarCircle}>
@@ -849,12 +851,12 @@ const Explore = ({ user, onLoginClick }) => {
 
                             <img src={selectedPost.petImage} alt={selectedPost.petName} style={styles.detailLargeImage} />
 
-                            <div style={{...styles.interactionBar, padding: '1rem 0', borderBottom: `1px solid ${colors.border}`, borderTop: `1px solid ${colors.border}`}}>
-                                <button 
-                                    style={{ 
-                                        ...styles.interactionItem, 
-                                        color: selectedPost.liked ? colors.heartActive : colors.textSecondary 
-                                    }} 
+                            <div style={{ ...styles.interactionBar, padding: '1rem 0', borderBottom: `1px solid ${colors.border}`, borderTop: `1px solid ${colors.border}` }}>
+                                <button
+                                    style={{
+                                        ...styles.interactionItem,
+                                        color: selectedPost.liked ? colors.heartActive : colors.textSecondary
+                                    }}
                                     onClick={() => handleLike(selectedPost.id)}
                                 >
                                     {selectedPost.liked ? '❤️' : '🤍'} {selectedPost.likes}
@@ -872,15 +874,15 @@ const Explore = ({ user, onLoginClick }) => {
                                             <span style={styles.commentAuthor}>{comment.author}</span>
                                         </div>
                                         <p style={styles.commentText}>{comment.text}</p>
-                                        
+
                                         <div style={{ display: 'flex', gap: '1rem' }}>
-                                            <button 
+                                            <button
                                                 style={styles.commentLikeBtn}
                                                 onClick={() => handleLikeComment(selectedPost.id, comment.id)}
                                             >
                                                 {comment.liked ? '❤️' : '🤍'} {comment.likes || 0}
                                             </button>
-                                            <button 
+                                            <button
                                                 style={styles.replyBtn}
                                                 onClick={() => setReplyingTo({ postId: selectedPost.id, commentId: comment.id })}
                                             >
@@ -901,9 +903,9 @@ const Explore = ({ user, onLoginClick }) => {
 
                                         {replyingTo?.commentId === comment.id && (
                                             <div style={styles.commentInput}>
-                                                <input 
+                                                <input
                                                     autoFocus
-                                                    style={styles.commentInputField} 
+                                                    style={styles.commentInputField}
                                                     placeholder="เขียนการตอบกลับ..."
                                                     id={`reply-input-${comment.id}`}
                                                     onKeyPress={(e) => {
@@ -913,7 +915,7 @@ const Explore = ({ user, onLoginClick }) => {
                                                         }
                                                     }}
                                                 />
-                                                <button 
+                                                <button
                                                     style={styles.smallBtn}
                                                     onClick={() => {
                                                         const replyText = document.getElementById(`reply-input-${comment.id}`).value;
@@ -929,10 +931,10 @@ const Explore = ({ user, onLoginClick }) => {
                                 ))}
                                 {selectedPost.comments.length === 0 && <p style={{ textAlign: 'center', color: colors.textSecondary, marginTop: '2rem', fontSize: '0.9rem' }}>ยังไม่มีความคิดเห็น</p>}
 
-                                 <div style={styles.commentInput}>
-                                    <input 
-                                        style={styles.commentInputField} 
-                                        placeholder="แสดงความคิดเห็นที่นี่..." 
+                                <div style={styles.commentInput}>
+                                    <input
+                                        style={styles.commentInputField}
+                                        placeholder="แสดงความคิดเห็นที่นี่..."
                                         value={commentText[selectedPost.id] || ''}
                                         onChange={(e) => setCommentText({ ...commentText, [selectedPost.id]: e.target.value })}
                                         onKeyPress={(e) => {
@@ -941,7 +943,7 @@ const Explore = ({ user, onLoginClick }) => {
                                             }
                                         }}
                                     />
-                                    <button 
+                                    <button
                                         style={styles.smallBtn}
                                         onClick={() => handleAddComment(selectedPost.id)}
                                     >
