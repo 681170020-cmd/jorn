@@ -1,9 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+
+const MessageCircleIcon = ({ size = 20, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+    </svg>
+);
 
 const Navbar = ({ onLoginClick, user, onLogout }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const location = useLocation();
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+            if (window.innerWidth > 768) {
+                setIsOpen(false);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Earth Tone Palette
     const colors = {
@@ -103,7 +122,7 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
             textDecoration: 'none'
         },
         toggle: {
-            display: 'none',
+            display: isMobile ? 'block' : 'none',
             background: 'none',
             border: 'none',
             fontSize: '1.5rem',
@@ -113,11 +132,12 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
         userProfile: {
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.4rem 0.8rem',
-            borderRadius: '12px',
+            justifyContent: 'center',
+            padding: '0.4rem',
+            borderRadius: '50%',
             backgroundColor: 'rgba(139, 94, 60, 0.08)',
-            cursor: 'default'
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
         },
         avatar: {
             width: '32px',
@@ -164,13 +184,12 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
     return (
         <nav style={styles.nav}>
             <div style={styles.container}>
-                <Link to="/" style={styles.brand}>
-                    <span style={styles.brandDot}></span>
-                    Jorn
-                </Link>
+            <Link to="/" style={styles.brand}>
+               <img src="/logo.png" alt="Jorn Logo" style={{height:"80px"}} />
+</Link>
 
                 {/* Desktop Links */}
-                <div style={window.innerWidth > 768 ? styles.links : styles.mobileLinks}>
+                <div style={!isMobile ? styles.links : styles.mobileLinks}>
                     <Link 
                         to="/explore" 
                         style={location.pathname === '/' || location.pathname === '/explore' ? {...styles.link, ...styles.activeLink} : styles.link} 
@@ -188,7 +207,7 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                                 <>
                                     <Link 
                                         to="/profile" 
-                                        style={{...styles.userName, paddingLeft: '0.75rem', textDecoration: 'none', color: colors.primary, display: 'flex', alignItems: 'center', gap: '0.5rem'}}
+                                        style={{...styles.userName, textDecoration: 'none', color: colors.primary, display: 'flex', alignItems: 'center'}}
                                         onClick={() => setIsOpen(false)}
                                     >
                                         <div style={styles.avatar}>
@@ -198,7 +217,6 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                                                 (user.name || '?').charAt(0)
                                             )}
                                         </div>
-                                        สวัสดี, {user.name || 'ผู้ใช้งาน'}
                                     </Link>
                                     <button style={styles.logoutBtn} onClick={() => { onLogout(); setIsOpen(false); }}>Log out</button>
                                 </>
@@ -209,7 +227,7 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                     )}
                 </div>
 
-                <div style={{...styles.links, display: window.innerWidth > 768 ? 'flex' : 'none'}}>
+                <div style={{...styles.links, display: !isMobile ? 'flex' : 'none'}}>
                     {user ? (
                         <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
                             <Link 
@@ -227,7 +245,9 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                                 }}
                                 onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(139, 94, 60, 0.15)'}
                                 onMouseOut={(e) => e.currentTarget.style.backgroundColor = location.pathname === '/chat' ? 'rgba(139, 94, 60, 0.15)' : 'transparent'}
-                            >💬</Link>
+                            >
+                                <MessageCircleIcon size={24} color={colors.primary} />
+                            </Link>
                             <Link 
                                 to="/profile" 
                                 style={{...styles.userProfile, textDecoration: 'none'}}
@@ -241,7 +261,6 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                                         (user.name || '?').charAt(0)
                                     )}
                                 </div>
-                                <span style={styles.userName}>{user.name || 'ผู้ใช้งาน'}</span>
                             </Link>
                             <button style={styles.logoutBtn} onClick={onLogout}>Log out</button>
                         </div>
@@ -252,7 +271,7 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
 
                 {/* Mobile Toggle Button */}
                 <button 
-                    style={{...styles.toggle, display: window.innerWidth <= 768 ? 'block' : 'none'}}
+                    style={styles.toggle}
                     onClick={() => setIsOpen(!isOpen)}
                 >
                     {isOpen ? '✕' : '☰'}

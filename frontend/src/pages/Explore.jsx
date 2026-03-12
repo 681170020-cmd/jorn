@@ -1,5 +1,18 @@
 import { useState } from 'react';
 
+const HeartIcon = ({ size = 20, color = 'currentColor', fill = 'none' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+);
+
+const MessageCircleIcon = ({ size = 20, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+    </svg>
+);
+
+
 const Explore = ({ user, onLoginClick, posts, setPosts }) => {
     // Earth Tone Colors
     const colors = {
@@ -23,8 +36,10 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
     const [imagePreview, setImagePreview] = useState('');
     const [selectedPostId, setSelectedPostId] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null); // { postId, commentId }
+    const [expandedComments, setExpandedComments] = useState({});
     const [showAdoptionForm, setShowAdoptionForm] = useState(false);
     const [adoptionPostId, setAdoptionPostId] = useState(null);
+    const [exploreError, setExploreError] = useState('');
     const [adoptionData, setAdoptionData] = useState({
         // 1) User Info
         fullName: user?.name || '',
@@ -33,19 +48,19 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
         email: user?.email || '',
         social: '',
         // 2) Housing
-        housingType: 'บ้าน',
-        isOwner: 'เจ้าของ',
+        housingType: '',
+        isOwner: '',
         area: '',
         members: '',
-        consent: 'ทุกคนยินยอม',
+        consent: '',
         // 3) Experience
-        hasExperience: 'เคยเลี้ยง',
-        hasOtherPets: 'ไม่มี',
-        knowsVaccine: 'ทราบและเคยพาไป',
+        hasExperience: '',
+        hasOtherPets: '',
+        knowsVaccine: '',
         // 4) Readiness
-        hasTime: 'มีเวลาสม่ำเสมอ',
-        caregiver: 'ตนเอง',
-        canAfford: 'ยอมรับได้',
+        hasTime: '',
+        caregiver: '',
+        canAfford: '',
         // 5) Reason
         reason: '',
         // 6) Terms
@@ -59,14 +74,14 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
     // New post form state
     const [newPost, setNewPost] = useState({
         petName: '',
-        petType: 'หมา',
+        petType: '',
         otherPetType: '',
         petImage: '',
-        gender: 'ชาย',
+        gender: '',
         age: '',
         health: '',
         location: '',
-        deliveryMethod: 'นัดรับ',
+        deliveryMethod: '',
         meetupPlace: '',
         content: ''
     });
@@ -112,42 +127,76 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
     };
 
     const handleAddPost = () => {
-        const post = {
-            id: Date.now(),
-            petName: newPost.petName || 'ไม่ระบุชื่อ',
-            petType: newPost.petType === 'อื่นๆ' ? (newPost.otherPetType || 'อื่นๆ') : newPost.petType,
-            author: user?.name || 'ผู้ใช้งาน',
-            avatar: user?.avatar || '',
-            gender: newPost.gender,
-            age: newPost.age || 'ไม่ระบุ',
-            health: newPost.health || 'สุขภาพดี',
-            location: newPost.location || 'ไม่ระบุ',
-            deliveryMethod: newPost.deliveryMethod,
-            meetupPlace: newPost.meetupPlace,
-            petImage: newPost.petImage || '',
-            content: newPost.content,
-            likes: 0,
-            liked: false,
-            isAdopted: false,
-            comments: [],
-            adoptionRequests: [],
-            createdAt: new Date().toLocaleString('th-TH')
-        };
-        setPosts([post, ...posts]);
+        const isOtherTypeMissing = newPost.petType === 'อื่นๆ' && !newPost.otherPetType.trim();
+        const isFormIncomplete = !newPost.petName.trim() || !newPost.content.trim() || !newPost.location.trim() || !newPost.petImage || 
+                               !newPost.petType || !newPost.gender || !newPost.deliveryMethod || isOtherTypeMissing;
+                               
+        if (isFormIncomplete) {
+            setExploreError('กรุณากรอกรายละเอียดและเลือกข้อมูลให้ครบถ้วน');
+            return;
+        }
+
+        if (editingPost) {
+            // Edit Mode
+            setPosts(posts.map(post => 
+                post.id === editingPost 
+                    ? { 
+                        ...post, 
+                        petName: newPost.petName,
+                        petType: newPost.petType === 'อื่นๆ' ? (newPost.otherPetType || 'อื่นๆ') : newPost.petType,
+                        gender: newPost.gender,
+                        age: newPost.age || 'ไม่ระบุ',
+                        health: newPost.health || 'สุขภาพดี',
+                        location: newPost.location || 'ไม่ระบุ',
+                        deliveryMethod: newPost.deliveryMethod,
+                        meetupPlace: newPost.meetupPlace,
+                        petImage: newPost.petImage,
+                        content: newPost.content
+                      } 
+                    : post
+            ));
+            setEditingPost(null);
+        } else {
+            // New Mode
+            const post = {
+                id: Date.now(),
+                petName: newPost.petName || 'ไม่ระบุชื่อ',
+                petType: newPost.petType === 'อื่นๆ' ? (newPost.otherPetType || 'อื่นๆ') : newPost.petType,
+                author: user?.name || 'ผู้ใช้งาน',
+                avatar: user?.avatar || '',
+                gender: newPost.gender,
+                age: newPost.age || 'ไม่ระบุ',
+                health: newPost.health || 'สุขภาพดี',
+                location: newPost.location || 'ไม่ระบุ',
+                deliveryMethod: newPost.deliveryMethod,
+                meetupPlace: newPost.meetupPlace,
+                petImage: newPost.petImage || '',
+                content: newPost.content,
+                likes: 0,
+                liked: false,
+                isAdopted: false,
+                comments: [],
+                adoptionRequests: [],
+                createdAt: new Date().toLocaleString('th-TH')
+            };
+            setPosts([post, ...posts]);
+        }
+
         setNewPost({
             petName: '',
-            petType: 'หมา',
+            petType: '',
             otherPetType: '',
             petImage: '',
-            gender: 'ชาย',
+            gender: '',
             age: '',
             health: '',
             location: '',
-            deliveryMethod: 'นัดรับ',
+            deliveryMethod: '',
             meetupPlace: '',
             content: ''
         });
         setImagePreview('');
+        setExploreError('');
         setShowForm(false);
     };
 
@@ -155,12 +204,24 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
         setPosts(posts.filter(post => post.id !== postId));
     };
 
-    const handleEditPost = (postId, newContent) => {
-        if (!newContent.trim()) return;
-        setPosts(posts.map(post =>
-            post.id === postId ? { ...post, content: newContent } : post
-        ));
-        setEditingPost(null);
+    const handleStartEdit = (post) => {
+        setEditingPost(post.id);
+        const isStandardType = ['หมา', 'แมว'].includes(post.petType);
+        setNewPost({
+            petName: post.petName,
+            petType: isStandardType ? post.petType : 'อื่นๆ',
+            otherPetType: isStandardType ? '' : post.petType,
+            petImage: post.petImage,
+            gender: post.gender,
+            age: post.age,
+            health: post.health,
+            location: post.location,
+            deliveryMethod: post.deliveryMethod,
+            meetupPlace: post.meetupPlace || '',
+            content: post.content
+        });
+        setImagePreview(post.petImage);
+        setShowForm(true);
     };
 
     const handleToggleAdopted = (postId) => {
@@ -197,7 +258,16 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
             area: '',
             members: '',
             reason: '',
-            termsAccepted: false
+            termsAccepted: false,
+            housingType: '',
+            isOwner: '',
+            consent: '',
+            hasExperience: '',
+            hasOtherPets: '',
+            knowsVaccine: '',
+            hasTime: '',
+            caregiver: '',
+            canAfford: ''
         });
     };
 
@@ -266,6 +336,34 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
         }));
     };
 
+    const handleLikeReply = (postId, commentId, replyId) => {
+        if (!user) {
+            onLoginClick();
+            return;
+        }
+        setPosts(posts.map(post => {
+            if (post.id !== postId) return post;
+            return {
+                ...post,
+                comments: post.comments.map(comment => {
+                    if (comment.id !== commentId) return comment;
+                    return {
+                        ...comment,
+                        replies: (comment.replies || []).map(reply => 
+                            reply.id === replyId 
+                                ? { 
+                                    ...reply, 
+                                    liked: !reply.liked, 
+                                    likes: reply.liked ? (reply.likes || 0) - 1 : (reply.likes || 0) + 1 
+                                }
+                                : reply
+                        )
+                    };
+                })
+            };
+        }));
+    };
+
     const handleReply = (postId, commentId, text) => {
         if (!user) {
             onLoginClick();
@@ -278,13 +376,21 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                 ...post,
                 comments: post.comments.map(comment =>
                     comment.id === commentId
-                        ? { ...comment, replies: [...(comment.replies || []), { id: Date.now(), author: user?.name || 'ผู้ใช้งาน', text }] }
+                        ? { ...comment, replies: [...(comment.replies || []), { 
+                            id: Date.now(), 
+                            author: user?.name || 'ผู้ใช้งาน', 
+                            text,
+                            likes: 0,
+                            liked: false
+                        }] }
                         : comment
                 )
             };
         }));
         setReplyingTo(null);
         setCommentText({ ...commentText, [`reply-${commentId}`]: '' });
+        // Auto expand when replying
+        setExpandedComments({ ...expandedComments, [commentId]: true });
     };
 
     const styles = {
@@ -489,6 +595,18 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
         replyText: {
             fontSize: '0.9rem',
             color: colors.textMain
+        },
+        viewMoreBtn: { 
+            background: 'none', 
+            border: 'none', 
+            color: colors.textSecondary, 
+            fontSize: '0.85rem', 
+            fontWeight: '700', 
+            cursor: 'pointer', 
+            padding: '0.5rem 0 0.5rem 0', 
+            textAlign: 'left',
+            display: 'block',
+            width: 'fit-content'
         },
 
         detailModalOverlay: {
@@ -863,19 +981,56 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
 
                 {/* Modal Form */}
                 {showForm && (
-                    <div style={styles.modalOverlay} onClick={() => setShowForm(false)}>
+                    <div style={styles.modalOverlay} onClick={() => {
+                        setShowForm(false);
+                        setEditingPost(null);
+                        setNewPost({
+                            petName: '',
+                            petType: 'หมา',
+                            otherPetType: '',
+                            petImage: '',
+                            gender: 'ชาย',
+                            age: '',
+                            health: '',
+                            location: '',
+                            deliveryMethod: 'นัดรับ',
+                            meetupPlace: '',
+                            content: ''
+                        });
+                        setImagePreview('');
+                        setExploreError('');
+                    }}>
                         <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
                             <button
-                                onClick={() => setShowForm(false)}
+                                onClick={() => {
+                                    setShowForm(false);
+                                    setEditingPost(null);
+                                    setNewPost({
+                                        petName: '',
+                                        petType: '',
+                                        otherPetType: '',
+                                        petImage: '',
+                                        gender: '',
+                                        age: '',
+                                        health: '',
+                                        location: '',
+                                        deliveryMethod: '',
+                                        meetupPlace: '',
+                                        content: ''
+                                    });
+                                    setImagePreview('');
+                                    setExploreError('');
+                                }}
                                 style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
                             >✕</button>
 
-                            <h2 style={styles.formTitle}>ประกาศหาบ้าน</h2>
+                            <h2 style={styles.formTitle}>{editingPost ? 'แก้ไขประกาศหาบ้าน' : 'ประกาศหาบ้าน'}</h2>
 
                             <div style={styles.formGrid}>
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>ประเภทสัตว์เลี้ยง *</label>
                                     <select style={styles.select} value={newPost.petType} onChange={(e) => setNewPost({ ...newPost, petType: e.target.value })}>
+                                        <option value="">-- เลือกประเภท --</option>
                                         <option value="หมา">🐕 หมา</option>
                                         <option value="แมว">🐈 แมว</option>
                                         <option value="อื่นๆ">🦎 อื่นๆ</option>
@@ -899,6 +1054,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>เพศ</label>
                                     <select style={styles.select} value={newPost.gender} onChange={(e) => setNewPost({ ...newPost, gender: e.target.value })}>
+                                        <option value="">-- เลือกเพศ --</option>
                                         <option value="ชาย">ชาย</option>
                                         <option value="หญิง">หญิง</option>
                                         <option value="ไม่ทราบ">ไม่ทราบ</option>
@@ -906,8 +1062,16 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                 </div>
 
                                 <div style={styles.inputGroup}>
-                                    <label style={styles.label}>อายุโดยประมาณ</label>
-                                    <input style={styles.input} placeholder="เช่น 2 ปี" value={newPost.age} onChange={(e) => setNewPost({ ...newPost, age: e.target.value })} />
+                                    <label style={styles.label}>อายุโดยประมาณ (เฉพาะตัวเลข)</label>
+                                    <input 
+                                        style={styles.input} 
+                                        placeholder="เช่น 2 (ใส่เฉพาะตัวเลข)" 
+                                        value={newPost.age} 
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
+                                            setNewPost({ ...newPost, age: val });
+                                        }} 
+                                    />
                                 </div>
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>สุขภาพ</label>
@@ -920,6 +1084,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                 <div style={styles.inputGroup}>
                                     <label style={styles.label}>วิธีการส่งต่อ</label>
                                     <select style={styles.select} value={newPost.deliveryMethod} onChange={(e) => setNewPost({ ...newPost, deliveryMethod: e.target.value })}>
+                                        <option value="">-- เลือกวิธีส่งต่อ --</option>
                                         <option value="ไปส่งให้">ไปส่งให้</option>
                                         <option value="มารับเอง">มารับเอง</option>
                                         <option value="นัดรับ">นัดรับ</option>
@@ -953,8 +1118,26 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                 <textarea style={styles.textarea} placeholder="เล่าเรื่องราวเกี่ยวกับน้อง..." value={newPost.content} onChange={(e) => setNewPost({ ...newPost, content: e.target.value })} />
                             </div>
 
-                            <button style={{ ...styles.smallBtn, width: '100%', padding: '1rem', marginTop: '1.5rem', fontSize: '1rem' }} onClick={handleAddPost}>
-                                โพสต์ประกาศ
+                            {exploreError && (
+                                <p style={{ color: colors.heartActive, fontSize: '0.85rem', fontWeight: '600', textAlign: 'center', margin: '0 0 1rem 0' }}>
+                                    ⚠️ {exploreError}
+                                </p>
+                            )}
+
+                            <button 
+                                style={{ 
+                                    ...styles.smallBtn, 
+                                    width: '100%', 
+                                    padding: '1rem', 
+                                    marginTop: '1.5rem', 
+                                    fontSize: '1rem',
+                                    opacity: (!newPost.petName.trim() || !newPost.content.trim() || !newPost.location.trim() || !newPost.petImage || !newPost.petType || !newPost.gender || !newPost.deliveryMethod || (newPost.petType === 'อื่นๆ' && !newPost.otherPetType.trim())) ? 0.6 : 1,
+                                    cursor: (!newPost.petName.trim() || !newPost.content.trim() || !newPost.location.trim() || !newPost.petImage || !newPost.petType || !newPost.gender || !newPost.deliveryMethod || (newPost.petType === 'อื่นๆ' && !newPost.otherPetType.trim())) ? 'not-allowed' : 'pointer'
+                                }} 
+                                onClick={handleAddPost}
+                                disabled={!newPost.petName.trim() || !newPost.content.trim() || !newPost.location.trim() || !newPost.petImage || !newPost.petType || !newPost.gender || !newPost.deliveryMethod || (newPost.petType === 'อื่นๆ' && !newPost.otherPetType.trim())}
+                            >
+                                {editingPost ? 'บันทึกการแก้ไข' : 'โพสต์ประกาศ'}
                             </button>
                         </div>
                     </div>
@@ -993,8 +1176,8 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                 </div>
                                 {user && user.name === post.author && (
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-                                        <div style={styles.actions} onClick={(e) => e.stopPropagation()}>
-                                            <button style={styles.actionBtn} onClick={() => setEditingPost(post.id)}>แก้ไข</button>
+                                    <div style={styles.actions} onClick={(e) => e.stopPropagation()}>
+                                            <button style={styles.actionBtn} onClick={() => handleStartEdit(post)}>แก้ไข</button>
                                             <button style={styles.actionBtn} onClick={() => handleDeletePost(post.id)}>ลบ</button>
                                         </div>
                                         <label 
@@ -1033,31 +1216,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                 )}
                             </div>
 
-                            {editingPost === post.id ? (
-                                <div style={{ marginBottom: '1rem' }}>
-                                    <textarea
-                                        style={styles.textarea}
-                                        defaultValue={post.content}
-                                        id={`edit-explore-${post.id}`}
-                                    />
-                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
-                                        <button
-                                            style={styles.smallBtn}
-                                            onClick={() => handleEditPost(post.id, document.getElementById(`edit-explore-${post.id}`).value)}
-                                        >
-                                            บันทึก
-                                        </button>
-                                        <button
-                                            style={styles.actionBtn}
-                                            onClick={() => setEditingPost(null)}
-                                        >
-                                            ยกเลิก
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <p style={styles.content}>{post.content}</p>
-                            )}
+                            <p style={styles.content}>{post.content}</p>
 
                             <div style={styles.infoGrid}>
                                 <div style={styles.infoItem}><span style={styles.infoLabel}>ประเภท</span> <span style={styles.infoValue}>{post.petType}</span></div>
@@ -1079,7 +1238,12 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                         handleLike(post.id);
                                     }}
                                 >
-                                    {post.liked ? '❤️' : '🤍'} {post.likes}
+                                    {post.liked ? (
+                                        <HeartIcon size={20} color={colors.heartActive} fill={colors.heartActive} />
+                                    ) : (
+                                        <HeartIcon size={20} color={colors.textSecondary} />
+                                    )}
+                                    <span>{post.likes}</span>
                                 </button>
                                 <button
                                     style={styles.commentBtn}
@@ -1088,9 +1252,10 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                         setSelectedPostId(post.id);
                                     }}
                                 >
-                                    💬 {post.comments.length} ความคิดเห็น
+                                    <MessageCircleIcon size={20} color={colors.textSecondary} />
+                                    <span>{post.comments.length} ความคิดเห็น</span>
                                 </button>
-                                {!post.isAdopted && (
+                                {(!post.isAdopted && (!user || user.name !== post.author)) && (
                                     <button 
                                         style={styles.interestBtn}
                                         onClick={(e) => {
@@ -1105,7 +1270,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                         onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
                                         onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                                     >
-                                        สนใจรับเลี้ยง ✨
+                                        สนใจรับเลี้ยง
                                     </button>
                                 )}
                             </div>
@@ -1141,7 +1306,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                 {user && user.name === selectedPost.author && (
                                     <div style={styles.detailTopActions}>
                                         <button style={styles.actionBtn} onClick={() => {
-                                            setEditingPost(selectedPost.id);
+                                            handleStartEdit(selectedPost);
                                             setSelectedPostId(null);
                                         }}>แก้ไข</button>
                                         <button style={styles.actionBtn} onClick={() => {
@@ -1197,12 +1362,18 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     }} 
                                     onClick={() => handleLike(selectedPost.id)}
                                 >
-                                    {selectedPost.liked ? '❤️' : '🤍'} {selectedPost.likes}
+                                    {selectedPost.liked ? (
+                                        <HeartIcon size={20} color={colors.heartActive} fill={colors.heartActive} />
+                                    ) : (
+                                        <HeartIcon size={20} color={colors.textSecondary} />
+                                    )}
+                                    <span>{selectedPost.likes}</span>
                                 </button>
                                 <div style={styles.interactionItem}>
-                                    💬 {selectedPost.comments.length} ความคิดเห็น
+                                    <MessageCircleIcon size={20} color={colors.textSecondary} />
+                                    <span>{selectedPost.comments.length} ความคิดเห็น</span>
                                 </div>
-                                {!selectedPost.isAdopted && (
+                                {(!selectedPost.isAdopted && (!user || user.name !== selectedPost.author)) && (
                                     <button 
                                         style={{...styles.interestBtn, fontSize: '1rem', padding: '0.8rem 2rem'}}
                                         onClick={() => {
@@ -1214,7 +1385,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                             }
                                         }}
                                     >
-                                        สนใจรับเลี้ยง ✨
+                                        สนใจรับเลี้ยง
                                     </button>
                                 )}
                             </div>
@@ -1233,7 +1404,12 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                                     style={styles.commentLikeBtn}
                                                     onClick={() => handleLikeComment(selectedPost.id, comment.id)}
                                                 >
-                                                    {comment.liked ? '❤️' : '🤍'} {comment.likes || 0}
+                                                    {comment.liked ? (
+                                                        <HeartIcon size={16} color={colors.heartActive} fill={colors.heartActive} />
+                                                    ) : (
+                                                        <HeartIcon size={16} color={colors.textSecondary} />
+                                                    )}
+                                                    <span>{comment.likes || 0}</span>
                                                 </button>
                                                 <button
                                                     style={styles.replyBtn}
@@ -1245,12 +1421,52 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
 
                                             {comment.replies && comment.replies.length > 0 && (
                                                 <div style={styles.replySection}>
-                                                    {comment.replies.map(reply => (
+                                                    {(expandedComments[comment.id] ? comment.replies : comment.replies.slice(0, 2)).map(reply => (
                                                         <div key={reply.id} style={styles.replyItem}>
                                                             <span style={styles.replyAuthor}>{reply.author}</span>
                                                             <p style={styles.replyText}>{reply.text}</p>
+                                                            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.4rem' }}>
+                                                                <button
+                                                                    style={{ ...styles.commentLikeBtn, marginTop: 0, color: reply.liked ? colors.heartActive : colors.textSecondary }}
+                                                                    onClick={() => handleLikeReply(selectedPost.id, comment.id, reply.id)}
+                                                                >
+                                                                    {reply.liked ? (
+                                                                        <HeartIcon size={14} color={colors.heartActive} fill={colors.heartActive} />
+                                                                    ) : (
+                                                                        <HeartIcon size={14} color={colors.textSecondary} />
+                                                                    )}
+                                                                    <span>{reply.likes || 0}</span>
+                                                                </button>
+                                                                <button
+                                                                    style={{ ...styles.replyBtn, marginTop: 0 }}
+                                                                    onClick={() => {
+                                                                        setReplyingTo({ postId: selectedPost.id, commentId: comment.id });
+                                                                        const replyInput = document.getElementById(`reply-input-${comment.id}`);
+                                                                        if (replyInput) {
+                                                                            replyInput.value = `@${reply.author} `;
+                                                                            replyInput.focus();
+                                                                        } else {
+                                                                            // If input isn't open yet, we let the state handle it but we might need 
+                                                                            // to pass the prefill via state if we want to be robust
+                                                                            setCommentText({ ...commentText, [`reply-${comment.id}`]: `@${reply.author} ` });
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    ตอบกลับ
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     ))}
+                                                    {comment.replies.length > 2 && (
+                                                        <button 
+                                                            style={styles.viewMoreBtn}
+                                                            onClick={() => setExpandedComments({ ...expandedComments, [comment.id]: !expandedComments[comment.id] })}
+                                                        >
+                                                            {expandedComments[comment.id] 
+                                                                ? 'ซ่อนการตอบกลับ' 
+                                                                : `ดูการตอบกลับเพิ่มเติม (${comment.replies.length - 2})`}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
 
@@ -1261,19 +1477,18 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                                         style={styles.commentInputField}
                                                         placeholder="เขียนการตอบกลับ..."
                                                         id={`reply-input-${comment.id}`}
+                                                        value={commentText[`reply-${comment.id}`] || ''}
+                                                        onChange={(e) => setCommentText({ ...commentText, [`reply-${comment.id}`]: e.target.value })}
                                                         onKeyPress={(e) => {
                                                             if (e.key === 'Enter') {
                                                                 handleReply(selectedPost.id, comment.id, e.target.value);
-                                                                e.target.value = ''; // Clear input after sending
                                                             }
                                                         }}
                                                     />
                                                     <button
                                                         style={styles.smallBtn}
                                                         onClick={() => {
-                                                            const replyText = document.getElementById(`reply-input-${comment.id}`).value;
-                                                            handleReply(selectedPost.id, comment.id, replyText);
-                                                            document.getElementById(`reply-input-${comment.id}`).value = ''; // Clear input after sending
+                                                            handleReply(selectedPost.id, comment.id, commentText[`reply-${comment.id}`] || '');
                                                         }}
                                                     >
                                                         ตอบ
@@ -1336,11 +1551,11 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                         <label style={styles.label}>อายุ *</label>
                                         <input 
                                             style={styles.input} 
-                                            type="number" 
-                                            min="0"
+                                            placeholder="เช่น 25"
                                             value={adoptionData.age} 
                                             onChange={e => {
-                                                const val = Math.max(0, parseInt(e.target.value) || 0);
+                                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                                if (val !== '' && parseInt(val) > 100) return;
                                                 setAdoptionData({...adoptionData, age: val});
                                             }} 
                                         />
@@ -1367,6 +1582,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     <div style={styles.inputGroup}>
                                         <label style={styles.label}>ลักษณะที่อยู่</label>
                                         <select style={styles.select} value={adoptionData.housingType} onChange={e => setAdoptionData({...adoptionData, housingType: e.target.value})}>
+                                            <option value="">-- เลือกประเภทที่อยู่ --</option>
                                             <option value="บ้าน">บ้านเดี่ยว/ทาวน์เฮ้าส์</option>
                                             <option value="คอนโด">คอนโด</option>
                                             <option value="หอพัก">หอพัก/อพาร์ทเม้นท์</option>
@@ -1375,6 +1591,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     <div style={styles.inputGroup}>
                                         <label style={styles.label}>สถานะที่พัก</label>
                                         <select style={styles.select} value={adoptionData.isOwner} onChange={e => setAdoptionData({...adoptionData, isOwner: e.target.value})}>
+                                            <option value="">-- เลือกสถานะ --</option>
                                             <option value="เจ้าของ">บ้านตนเอง</option>
                                             <option value="เช่า">บ้านเช่า (ระบุว่าเลี้ยงได้)</option>
                                         </select>
@@ -1400,6 +1617,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
                                         <label style={styles.label}>ทุกคนในบ้านยินยอมความเห็นชอบหรือไม่?</label>
                                         <select style={styles.select} value={adoptionData.consent} onChange={e => setAdoptionData({...adoptionData, consent: e.target.value})}>
+                                            <option value="">-- เลือกความเห็นชอบ --</option>
                                             <option value="ทุกคนยินยอม">ทุกคนยินยอมและรับทราบ</option>
                                             <option value="บางคน">ยังไม่ได้คุยกับทุกคน</option>
                                         </select>
@@ -1414,6 +1632,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     <div style={styles.inputGroup}>
                                         <label style={styles.label}>เคยเลี้ยงสัตว์มาก่อนหรือไม่?</label>
                                         <select style={styles.select} value={adoptionData.hasExperience} onChange={e => setAdoptionData({...adoptionData, hasExperience: e.target.value})}>
+                                            <option value="">-- เลือกคำตอบ --</option>
                                             <option value="เคยเลี้ยง">เคยเลี้ยง</option>
                                             <option value="ไม่เคย">ไม่เคย (เป็นครั้งแรก)</option>
                                         </select>
@@ -1421,6 +1640,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     <div style={styles.inputGroup}>
                                         <label style={styles.label}>ตอนนี้มีสัตว์อื่นอยู่หรือเปล่า?</label>
                                         <select style={styles.select} value={adoptionData.hasOtherPets} onChange={e => setAdoptionData({...adoptionData, hasOtherPets: e.target.value})}>
+                                            <option value="">-- เลือกคำตอบ --</option>
                                             <option value="ไม่มี">ไม่มี</option>
                                             <option value="มี">มี (ระบุในข้อ 5)</option>
                                         </select>
@@ -1428,6 +1648,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
                                         <label style={styles.label}>ความเข้าใจเรื่องวัคซีน / ทำหมัน</label>
                                         <select style={styles.select} value={adoptionData.knowsVaccine} onChange={e => setAdoptionData({...adoptionData, knowsVaccine: e.target.value})}>
+                                            <option value="">-- เลือกความเข้าใจ --</option>
                                             <option value="ทราบและเคยพาไป">ทราบความสำคัญและพร้อมพาไป</option>
                                             <option value="ยังไม่ค่อยทราบ">ยังไม่แน่ใจเกี่ยวกับค่าใช้จ่ายและระยะเวลา</option>
                                         </select>
@@ -1442,6 +1663,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     <div style={styles.inputGroup}>
                                         <label style={styles.label}>มีเวลาเลี้ยงดูน้องสม่ำเสมอไหม?</label>
                                         <select style={styles.select} value={adoptionData.hasTime} onChange={e => setAdoptionData({...adoptionData, hasTime: e.target.value})}>
+                                            <option value="">-- เลือกการมีเวลา --</option>
                                             <option value="มีเวลาสม่ำเสมอ">มีเวลาคลุกคลีตลอด</option>
                                             <option value="ทำงานนอกบ้าน">ไปทำงานนอกบ้าน (เช้า-เย็น)</option>
                                         </select>
@@ -1453,6 +1675,7 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                                     <div style={{ ...styles.inputGroup, gridColumn: 'span 2' }}>
                                         <label style={styles.label}>ยอมรับค่าใช้จ่ายได้ส่วนนี้ได้หรือไม่?</label>
                                         <select style={styles.select} value={adoptionData.canAfford} onChange={e => setAdoptionData({...adoptionData, canAfford: e.target.value})}>
+                                            <option value="">-- เลือกการยอมรับ --</option>
                                             <option value="ยอมรับได้">ยอมรับได้ (อาหาร, ค่ารักษาพยาบาลฉุกเฉิน)</option>
                                             <option value="ค่อนข้างกังวล">ค่อนข้างกังวลกับค่าใช้จ่าย</option>
                                         </select>
@@ -1491,8 +1714,18 @@ const Explore = ({ user, onLoginClick, posts, setPosts }) => {
                         </div>
 
                         <button 
-                            style={{ ...styles.smallBtn, width: '100%', padding: '1.2rem', marginTop: '1.5rem', fontSize: '1.1rem', backgroundColor: '#27ae60' }} 
+                            style={{ 
+                                ...styles.smallBtn, 
+                                width: '100%', 
+                                padding: '1.2rem', 
+                                marginTop: '1.5rem', 
+                                fontSize: '1.1rem', 
+                                backgroundColor: '#27ae60',
+                                opacity: (!adoptionData.fullName || !adoptionData.phone || !adoptionData.reason || !adoptionData.termsAccepted || !adoptionData.housingType || !adoptionData.isOwner || !adoptionData.consent || !adoptionData.hasExperience || !adoptionData.hasOtherPets || !adoptionData.knowsVaccine || !adoptionData.hasTime || !adoptionData.canAfford) ? 0.6 : 1,
+                                cursor: (!adoptionData.fullName || !adoptionData.phone || !adoptionData.reason || !adoptionData.termsAccepted || !adoptionData.housingType || !adoptionData.isOwner || !adoptionData.consent || !adoptionData.hasExperience || !adoptionData.hasOtherPets || !adoptionData.knowsVaccine || !adoptionData.hasTime || !adoptionData.canAfford) ? 'not-allowed' : 'pointer'
+                            }} 
                             onClick={handleAdoptionSubmit}
+                            disabled={!adoptionData.fullName || !adoptionData.phone || !adoptionData.reason || !adoptionData.termsAccepted || !adoptionData.housingType || !adoptionData.isOwner || !adoptionData.consent || !adoptionData.hasExperience || !adoptionData.hasOtherPets || !adoptionData.knowsVaccine || !adoptionData.hasTime || !adoptionData.canAfford}
                         >
                             ยืนยันการส่งใบสมัคร
                         </button>

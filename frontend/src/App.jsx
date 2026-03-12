@@ -12,6 +12,8 @@ import Chat from "./pages/Chat";
 function App() {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [user, setUser] = useState(null);
+    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+    const [successMsg, setSuccessMsg] = useState('');
 
 
     const toggleLogin = () => setIsLoginOpen(!isLoginOpen);
@@ -19,6 +21,16 @@ function App() {
     const handleLoginSuccess = (userData) => {
         setUser(userData);
         setIsLoginOpen(false);
+        
+        const message = userData.type === 'registration' ? 'Registration Successful' : 'Login Successful';
+        setSuccessMsg(message);
+        
+        setTimeout(() => {
+            setShowSuccessPopup(true);
+            setTimeout(() => {
+                setShowSuccessPopup(false);
+            }, 1500);
+        }, 100);
     };
     const [communityPosts, setCommunityPosts] = useState([
         {
@@ -163,9 +175,72 @@ function App() {
                         onLoginSuccess={handleLoginSuccess}
                     />
                 )}
+
+                {showSuccessPopup && (
+                    <div style={popupStyles.overlay}>
+                        <div style={popupStyles.popup}>
+                            <div style={popupStyles.icon}>✓</div>
+                            <h2 style={popupStyles.text}>{successMsg}</h2>
+                        </div>
+                    </div>
+                )}
+                
+                <style>
+                    {`
+                        @keyframes popIn {
+                            from { transform: scale(0.8); opacity: 0; }
+                            to { transform: scale(1); opacity: 1; }
+                        }
+                    `}
+                </style>
             </div>
         </Router>
     );
 }
+
+const popupStyles = {
+    overlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(61, 43, 31, 0.4)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 3000,
+    },
+    popup: {
+        backgroundColor: '#ffffff',
+        padding: '2.5rem',
+        borderRadius: '40px',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '1rem',
+        minWidth: '300px',
+        animation: 'popIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28)'
+    },
+    icon: {
+        width: '60px',
+        height: '60px',
+        borderRadius: '50%',
+        backgroundColor: '#2ecc71',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: 'white',
+        fontSize: '2rem',
+    },
+    text: {
+        fontSize: '1.25rem',
+        fontWeight: '800',
+        color: '#5a4638',
+        margin: 0
+    }
+};
 
 export default App;

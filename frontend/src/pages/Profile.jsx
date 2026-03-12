@@ -200,6 +200,12 @@ const Profile = ({ user, onUpdateUser, communityPosts = [], explorePosts = [] })
             width: '100%',
             boxSizing: 'border-box'
         },
+        readonlyInput: {
+            backgroundColor: 'rgba(139, 94, 60, 0.05)',
+            color: colors.textSecondary,
+            cursor: 'not-allowed',
+            borderStyle: 'dashed'
+        },
         btnGroup: {
             display: 'flex',
             gap: '1rem',
@@ -461,11 +467,17 @@ const Profile = ({ user, onUpdateUser, communityPosts = [], explorePosts = [] })
                 {isEditing ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'center' }}>
                         <input
-                            style={{ ...styles.input, fontSize: '1.6rem', fontWeight: '800', textAlign: 'center', width: '90%' }}
+                            style={{ 
+                                ...styles.input, 
+                                ...styles.readonlyInput,
+                                fontSize: '1.6rem', 
+                                fontWeight: '800', 
+                                textAlign: 'center', 
+                                width: '90%' 
+                            }}
                             value={editedUser.name}
-                            onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
+                            readOnly
                             placeholder="ระบุชื่อของคุณ"
-                            autoFocus
                         />
                         <p style={{ margin: 0, color: colors.textSecondary }}>{userHandle}</p>
                     </div>

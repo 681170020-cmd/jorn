@@ -1,5 +1,20 @@
 import { useState } from 'react';
 
+const EyeIcon = ({ size = 20, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+);
+
+const EyeOffIcon = ({ size = 20, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+);
+
+
 const Login = ({ isOpen, onClose, onLoginSuccess }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [name, setName] = useState('');
@@ -8,6 +23,8 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
     const [location, setLocation] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [birthDay, setBirthDay] = useState('');
     const [birthMonth, setBirthMonth] = useState('');
     const [birthYear, setBirthYear] = useState('');
@@ -15,8 +32,8 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
 
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
     const months = [
-        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
     ];
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
@@ -33,7 +50,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
 
         if (isLogin) {
             if (!email.trim() || !password.trim()) {
-                setErrorMsg('กรุณากรอกข้อมูลให้ครบถ้วน');
+                setErrorMsg('Please fill in all fields');
                 return;
             }
 
@@ -53,7 +70,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 const data = await response.json();
 
                 if (!response.ok) {
-                    const errorMessage = data.error?.message || data.message || 'Email หรือรหัสผ่านไม่ถูกต้อง';
+                    const errorMessage = data.error?.message || data.message || 'Invalid email or password';
                     setErrorMsg(errorMessage);
                     return;
                 }
@@ -65,28 +82,43 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
 
                 onLoginSuccess({
                     name: user.username,
-                    email: user.email
+                    email: user.email,
+                    type: 'login'
                 });
             } catch (error) {
-                setErrorMsg('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                setErrorMsg('Unable to connect to server');
                 console.error('Login error:', error);
             }
         } else {
             if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim() || !phone.trim() || !location.trim() || !birthDay || !birthMonth || !birthYear) {
-                setErrorMsg('กรุณากรอกข้อมูลให้ครบสมบูรณ์ทุกช่อง');
+                setErrorMsg('Please fill in all fields');
                 return;
             }
             if (password !== confirmPassword) {
-                setErrorMsg('รหัสผ่านไม่ตรงกัน');
+                setErrorMsg('Passwords do not match');
                 return;
             }
-            if (password.length < 8) {
-                setErrorMsg('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร');
+            
+            // Password Validation
+            if (password.length < 6) {
+                setErrorMsg('Password must be at least 6 characters');
+                return;
+            }
+            if (!/^[a-zA-Z0-9]+$/.test(password)) {
+                setErrorMsg('Only letters and numbers are allowed (no emojis or symbols)');
+                return;
+            }
+            if (!/[A-Z]/.test(password)) {
+                setErrorMsg('Password must contain at least one uppercase letter');
                 return;
             }
 
             // ตรวจสอบอายุ (ต้องมากกว่าหรือเท่ากับ 15 ปี)
             const birthMonthIndex = getBirthMonthIndex(birthMonth);
+            const formattedMonth = String(birthMonthIndex + 1).padStart(2, '0');
+            const formattedDay = String(birthDay).padStart(2, '0');
+            const standardizedBirthday = `${birthYear}-${formattedMonth}-${formattedDay}`;
+
             const birthDate = new Date(parseInt(birthYear), birthMonthIndex, parseInt(birthDay));
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
@@ -95,8 +127,8 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 age--;
             }
 
-            if (age < 15) {
-                setErrorMsg('ผู้สมัครต้องมีอายุอย่างน้อย 15 ปี');
+            if (age < 18) {
+                setErrorMsg('You must be at least 18 years old');
                 return;
             }
 
@@ -104,11 +136,11 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
             const cleanPhone = phone.replace(/\D/g, '');
 
             if (cleanPhone.length < 10) {
-                setErrorMsg('เบอร์โทรศัพท์ขาดกรุณาตรวจสอบอีกครั้ง');
+                setErrorMsg('Phone number is too short');
                 return;
             }
             if (cleanPhone.length > 10) {
-                setErrorMsg('เบอร์โทรศัพท์เกินกรุณาตรวจสอบอีกครั้ง');
+                setErrorMsg('Phone number is too long');
                 return;
             }
             // เรียก API ไปที่ Backend
@@ -124,14 +156,14 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                         password: password,
                         phone: cleanPhone,
                         location: location,
-                        birthday: `${birthDay} ${birthMonth} ${birthYear}`
+                        birthday: standardizedBirthday
                     }),
                 });
 
                 const data = await response.json();
 
                 if (!response.ok) {
-                    const errorMessage = data.error?.message || data.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก';
+                    const errorMessage = data.error?.message || data.message || 'Error occurred during registration';
                     setErrorMsg(errorMessage);
                     return;
                 }
@@ -141,10 +173,11 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                     email: email,
                     phone: cleanPhone,
                     location: location,
-                    birthday: `${birthDay} ${birthMonth} ${birthYear}`
+                    birthday: standardizedBirthday,
+                    type: 'registration'
                 });
             } catch (error) {
-                setErrorMsg('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                setErrorMsg('Unable to connect to server');
                 console.error('Register error:', error);
             }
         }
@@ -159,6 +192,8 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
         setLocation('');
         setPassword('');
         setConfirmPassword('');
+        setShowPassword(false);
+        setShowConfirmPassword(false);
         setBirthDay('');
         setBirthMonth('');
         setBirthYear('');
@@ -290,30 +325,51 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
             boxShadow: '0 8px 15px rgba(191, 166, 147, 0.3)',
             transition: 'all 0.3s ease'
         },
-        footerLink: {
-            marginTop: '1.25rem',
-            fontSize: '0.8rem',
+        userName: {
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            color: colors.textMain
+        },
+        passwordContainer: {
+            position: 'relative',
+            width: '100%'
+        },
+        toggleIconState: {
+            position: 'absolute',
+            right: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '1.2rem',
             color: colors.textSecondary,
-            textDecoration: 'none',
-            fontWeight: '600'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '4px',
+            zIndex: 10
         }
     };
 
     return (
-        <div style={styles.overlay} onClick={onClose}>
-            <div style={styles.card} onClick={(e) => e.stopPropagation()}>
-                <button style={styles.closeBtn} onClick={onClose}>✕</button>
+        <div style={styles.overlay} onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+        }}>
+            <div style={styles.card}>
+                <button
+                    style={styles.closeBtn}
+                    onClick={onClose}
+                    type="button"
+                >
+                    ✕
+                </button>
+
                 <div style={styles.logoSection}>
                     <div style={styles.mascotCircle}>
-                        <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
-                            <path d="M30 65 Q 40 40, 50 65" fill="none" stroke={colors.textMain} strokeWidth="1.5" />
-                            <path d="M70 65 Q 60 40, 50 65" fill="none" stroke={colors.textMain} strokeWidth="1.5" />
-                            <circle cx="40" cy="55" r="2" fill={colors.textMain} />
-                            <circle cx="60" cy="55" r="2" fill={colors.textMain} />
-                            <circle cx="50" cy="70" r="3" fill={colors.primary} />
-                        </svg>
+                        <img src="/logo.png" alt="logo" style={{ width: '100%', height: '100%' }} />
                     </div>
-                    <h1 style={styles.title}>{isLogin ? 'Login' : 'Sign Up'}</h1>
+                    <h1 style={styles.title}>JORN</h1>
                 </div>
 
                 <form style={styles.formContainer} onSubmit={handleSubmit}>
@@ -338,6 +394,9 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                 />
+                                <span style={{ fontSize: '0.7rem', color: '#8d7b6d', marginLeft: '0.8rem', marginTop: '0.25rem', fontWeight: '500' }}>
+                                    * Exactly 10 digits
+                                </span>
                             </div>
                             <div style={styles.inputWrapper}>
                                 <span style={styles.label}>Location</span>
@@ -350,14 +409,14 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                                 />
                             </div>
                             <div style={styles.inputWrapper}>
-                                <span style={styles.label}>วันเกิด</span>
+                                <span style={styles.label}>Birthday</span>
                                 <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
                                     <select
                                         style={{ ...styles.input, padding: '0.8rem 0.5rem', flex: 1 }}
                                         value={birthDay}
                                         onChange={(e) => setBirthDay(e.target.value)}
                                     >
-                                        <option value="">วัน</option>
+                                        <option value="">Day</option>
                                         {days.map(d => <option key={d} value={d}>{d}</option>)}
                                     </select>
                                     <select
@@ -365,7 +424,7 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                                         value={birthMonth}
                                         onChange={(e) => setBirthMonth(e.target.value)}
                                     >
-                                        <option value="">เดือน</option>
+                                        <option value="">Month</option>
                                         {months.map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
                                     <select
@@ -373,10 +432,13 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                                         value={birthYear}
                                         onChange={(e) => setBirthYear(e.target.value)}
                                     >
-                                        <option value="">ปี (ค.ศ.)</option>
+                                        <option value="">Year (A.D.)</option>
                                         {years.map(y => <option key={y} value={y}>{y}</option>)}
                                     </select>
                                 </div>
+                                <span style={{ fontSize: '0.7rem', color: '#8d7b6d', marginLeft: '0.8rem', marginTop: '0.3rem', fontWeight: '500' }}>
+                                    * You must be at least 18 years old
+                                </span>
                             </div>
                         </>
                     )}
@@ -392,24 +454,49 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                     </div>
                     <div style={styles.inputWrapper}>
                         <span style={styles.label}>Password</span>
-                        <input
-                            type="password"
-                            style={styles.input}
-                            placeholder="********"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
+                        <div style={styles.passwordContainer}>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                style={{...styles.input, paddingRight: '40px'}}
+                                placeholder="********"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                            <button 
+                                type="button" 
+                                style={styles.toggleIconState}
+                                onClick={() => setShowPassword(!showPassword)}
+                                tabIndex="-1"
+                            >
+                                {showPassword ? <EyeOffIcon color={colors.textSecondary} /> : <EyeIcon color={colors.textSecondary} />}
+                            </button>
+                        </div>
+                        {!isLogin && (
+                            <span style={{ fontSize: '0.7rem', color: '#8d7b6d', marginLeft: '0.8rem', marginTop: '0.2rem' }}>
+                                * Minimum 6 characters with at least 1 uppercase letter (Alphanumeric only)
+                            </span>
+                        )}
                     </div>
                     {!isLogin && (
                         <div style={styles.inputWrapper}>
                             <span style={styles.label}>Confirm Password</span>
-                            <input
-                                type="password"
-                                style={styles.input}
-                                placeholder="********"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                            />
+                            <div style={styles.passwordContainer}>
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    style={{...styles.input, paddingRight: '40px'}}
+                                    placeholder="********"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                />
+                                <button 
+                                    type="button" 
+                                    style={styles.toggleIconState}
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    tabIndex="-1"
+                                >
+                                    {showConfirmPassword ? <EyeOffIcon color={colors.textSecondary} /> : <EyeIcon color={colors.textSecondary} />}
+                                </button>
+                            </div>
                         </div>
                     )}
                     {errorMsg && (
@@ -423,8 +510,8 @@ const Login = ({ isOpen, onClose, onLoginSuccess }) => {
                 </form>
 
                 <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {isLogin && <a href="#" style={styles.footerLink}>Forgot Password?</a>}
-                    <p style={{ ...styles.footerLink, margin: 0 }}>
+                    {isLogin && <a href="#" style={{ textDecoration: 'none', color: colors.textSecondary, fontSize: '0.85rem' }}>Forgot Password?</a>}
+                    <p style={{ fontSize: '0.85rem', color: colors.textSecondary, margin: 0 }}>
                         {isLogin ? "Don't have an account? " : "Already have an account? "}
                         <span
                             style={{ color: colors.primary, cursor: 'pointer', borderBottom: `1px solid ${colors.primary}` }}

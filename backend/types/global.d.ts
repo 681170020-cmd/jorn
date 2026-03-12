@@ -19,3 +19,5 @@ declare interface ITypeReturnResponse<V = null> {
   error: string | null | object | number | boolean;
   payload: V;
 }
+
+

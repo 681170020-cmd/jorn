@@ -1,5 +1,18 @@
 import { useState } from 'react';
 
+const HeartIcon = ({ size = 20, color = 'currentColor', fill = 'none' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+);
+
+const MessageCircleIcon = ({ size = 20, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+    </svg>
+);
+
+
 const Community = ({ user, onLoginClick, posts, setPosts }) => {
     // Earth Tone Colors
     const colors = {
@@ -25,6 +38,7 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
     const [editImagePreview, setEditImagePreview] = useState('');
     const [selectedPostId, setSelectedPostId] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null); // { postId, commentId }
+    const [expandedComments, setExpandedComments] = useState({});
     const [commentText, setCommentText] = useState({});
     const [imagePreview, setImagePreview] = useState('');
     const [newPost, setNewPost] = useState({
@@ -32,6 +46,7 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
         image: '',
         category: 'general'
     });
+    const [postError, setPostError] = useState('');
 
     const selectedPost = posts.find(p => p.id === selectedPostId);
 
@@ -65,7 +80,10 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
     };
 
     const handleAddPost = () => {
-        if (!newPost.content.trim()) return;
+        if (!newPost.content.trim()) {
+            setPostError('กรุณากรอกรายละเอียดก่อนโพสต์');
+            return;
+        }
         const post = {
             id: Date.now(),
             author: user?.name || 'ผู้ใช้งาน',
@@ -146,6 +164,34 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
         }));
     };
 
+    const handleLikeReply = (postId, commentId, replyId) => {
+        if (!user) {
+            onLoginClick();
+            return;
+        }
+        setPosts(posts.map(post => {
+            if (post.id !== postId) return post;
+            return {
+                ...post,
+                comments: post.comments.map(comment => {
+                    if (comment.id !== commentId) return comment;
+                    return {
+                        ...comment,
+                        replies: comment.replies.map(reply => 
+                            reply.id === replyId 
+                                ? { 
+                                    ...reply, 
+                                    liked: !reply.liked, 
+                                    likes: reply.liked ? (reply.likes || 0) - 1 : (reply.likes || 0) + 1 
+                                }
+                                : reply
+                        )
+                    };
+                })
+            };
+        }));
+    };
+
     const handleReply = (postId, commentId, text) => {
         if (!user) {
             onLoginClick();
@@ -163,7 +209,9 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
                             replies: [...comment.replies, { 
                                 id: Date.now(), 
                                 author: user?.name || 'ผู้ใช้งาน', 
-                                text 
+                                text,
+                                likes: 0,
+                                liked: false
                             }] 
                         }
                         : comment
@@ -172,6 +220,8 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
         }));
         setReplyingTo(null);
         setCommentText({ ...commentText, [`reply-${commentId}`]: '' });
+        // Auto expand when replying
+        setExpandedComments({ ...expandedComments, [commentId]: true });
     };
 
     const styles = {
@@ -288,6 +338,18 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
         replyContent: { flex: 1, backgroundColor: colors.bg, padding: '0.8rem 1rem', borderRadius: '0 15px 15px 15px' },
         replyAuthor: { fontSize: '0.9rem', fontWeight: '800', marginBottom: '0.2rem', display: 'block' },
         replyText: { fontSize: '0.9rem', lineHeight: '1.4', color: colors.textMain },
+        viewMoreBtn: { 
+            background: 'none', 
+            border: 'none', 
+            color: colors.textSecondary, 
+            fontSize: '0.85rem', 
+            fontWeight: '700', 
+            cursor: 'pointer', 
+            padding: '0.5rem 0 0.5rem 1.5rem', 
+            textAlign: 'left',
+            display: 'block',
+            width: 'fit-content'
+        },
 
         detailDescription: {
             fontSize: '1.1rem',
@@ -461,15 +523,37 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
                                     style={styles.textarea} 
                                     placeholder="เขียนข้อความที่นี่..." 
                                     value={newPost.content} 
-                                    onChange={(e) => setNewPost({...newPost, content: e.target.value})} 
+                                    onChange={(e) => {
+                                        setNewPost({...newPost, content: e.target.value});
+                                        if (e.target.value.trim()) setPostError('');
+                                    }} 
                                 />
                             </div>
 
+                            {postError && (
+                                <p style={{ color: colors.heartActive, fontSize: '0.85rem', fontWeight: '600', textAlign: 'center', margin: '0 0 1rem 0' }}>
+                                    ⚠️ {postError}
+                                </p>
+                            )}
+
                             <button 
-                                style={{ ...styles.smallBtn, width: '100%', padding: '1.2rem', marginTop: '1rem', fontSize: '1.1rem' }} 
+                                style={{ 
+                                    ...styles.smallBtn, 
+                                    width: '100%', 
+                                    padding: '1.2rem', 
+                                    marginTop: '1rem', 
+                                    fontSize: '1.1rem',
+                                    opacity: !newPost.content.trim() ? 0.6 : 1,
+                                    cursor: !newPost.content.trim() ? 'not-allowed' : 'pointer'
+                                }} 
                                 onClick={handleAddPost}
-                                onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
-                                onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+                                disabled={!newPost.content.trim()}
+                                onMouseOver={(e) => {
+                                    if (newPost.content.trim()) e.currentTarget.style.opacity = '0.9';
+                                }}
+                                onMouseOut={(e) => {
+                                    if (newPost.content.trim()) e.currentTarget.style.opacity = '1';
+                                }}
                             >
                                 โพสต์ลงชุมชน
                             </button>
@@ -585,10 +669,15 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
                                     onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                                     onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                                 >
-                                    {post.liked ? '❤️' : '🤍'} {post.likes}
+                                    {post.liked ? (
+                                        <HeartIcon size={20} color={colors.heartActive} fill={colors.heartActive} />
+                                    ) : (
+                                        <HeartIcon size={20} color={colors.textSecondary} />
+                                    )}
+                                    <span>{post.likes}</span>
                                 </button>
                                 <div style={styles.commentBtn}>
-                                    <span>💬</span>
+                                    <MessageCircleIcon size={20} color={colors.textSecondary} />
                                     <span>{post.comments.length} ความคิดเห็น</span>
                                 </div>
                             </div>
@@ -669,10 +758,15 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
                                         handleLike(selectedPost.id);
                                     }}
                                 >
-                                    {selectedPost.liked ? '❤️' : '🤍'} {selectedPost.likes}
+                                    {selectedPost.liked ? (
+                                        <HeartIcon size={20} color={colors.heartActive} fill={colors.heartActive} />
+                                    ) : (
+                                        <HeartIcon size={20} color={colors.textSecondary} />
+                                    )}
+                                    <span>{selectedPost.likes}</span>
                                 </button>
                                 <div style={styles.commentBtn}>
-                                    <span>💬</span>
+                                    <MessageCircleIcon size={20} color={colors.textSecondary} />
                                     <span>{selectedPost.comments.length} ความคิดเห็น</span>
                                 </div>
                             </div>
@@ -712,7 +806,12 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
                                                         style={{ ...styles.commentLikeBtn, color: comment.liked ? colors.heartActive : colors.textSecondary }}
                                                         onClick={() => handleLikeComment(selectedPost.id, comment.id)}
                                                     >
-                                                        {comment.liked ? '❤️' : '🤍'} {comment.likes}
+                                                        {comment.liked ? (
+                                                            <HeartIcon size={16} color={colors.heartActive} fill={colors.heartActive} />
+                                                        ) : (
+                                                            <HeartIcon size={16} color={colors.textSecondary} />
+                                                        )}
+                                                        <span>{comment.likes}</span>
                                                     </button>
                                                     <button 
                                                         style={styles.replyBtn}
@@ -743,7 +842,7 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
 
                                                 {comment.replies && comment.replies.length > 0 && (
                                                     <div style={styles.replySection}>
-                                                        {comment.replies.map(reply => (
+                                                        {(expandedComments[comment.id] ? comment.replies : comment.replies.slice(0, 2)).map(reply => (
                                                             <div key={reply.id} style={styles.replyItem}>
                                                                 <div style={{ ...styles.avatarCircle, width: '30px', height: '30px', fontSize: '0.8rem', borderRadius: '50%' }}>
                                                                     {reply.author.charAt(0)}
@@ -751,9 +850,41 @@ const Community = ({ user, onLoginClick, posts, setPosts }) => {
                                                                 <div style={styles.replyContent}>
                                                                     <span style={styles.replyAuthor}>{reply.author}</span>
                                                                     <p style={styles.replyText}>{reply.text}</p>
+                                                                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.4rem' }}>
+                                                                        <button 
+                                                                            style={{ ...styles.commentLikeBtn, marginTop: 0, color: reply.liked ? colors.heartActive : colors.textSecondary }}
+                                                                            onClick={() => handleLikeReply(selectedPost.id, comment.id, reply.id)}
+                                                                        >
+                                                                            {reply.liked ? (
+                                                                                <HeartIcon size={14} color={colors.heartActive} fill={colors.heartActive} />
+                                                                            ) : (
+                                                                                <HeartIcon size={14} color={colors.textSecondary} />
+                                                                            )}
+                                                                            <span>{reply.likes || 0}</span>
+                                                                        </button>
+                                                                        <button 
+                                                                            style={{ ...styles.replyBtn, marginTop: 0 }}
+                                                                            onClick={() => {
+                                                                                setReplyingTo({ postId: selectedPost.id, commentId: comment.id });
+                                                                                setCommentText({ ...commentText, [`reply-${comment.id}`]: `@${reply.author} ` });
+                                                                            }}
+                                                                        >
+                                                                            ตอบกลับ
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         ))}
+                                                        {comment.replies.length > 2 && (
+                                                            <button 
+                                                                style={styles.viewMoreBtn}
+                                                                onClick={() => setExpandedComments({ ...expandedComments, [comment.id]: !expandedComments[comment.id] })}
+                                                            >
+                                                                {expandedComments[comment.id] 
+                                                                    ? 'ซ่อนการตอบกลับ' 
+                                                                    : `ดูการตอบกลับเพิ่มเติม (${comment.replies.length - 2})`}
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>

@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 
+const MessageCircleIcon = ({ size = 20, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+    </svg>
+);
+
 const Chat = ({ user, onLoginClick }) => {
     // Earth Tone Colors
     const colors = {
@@ -303,7 +309,9 @@ const Chat = ({ user, onLoginClick }) => {
             <div style={styles.container}>
                 <div style={styles.chatContainer}>
                     <div style={styles.loginPrompt}>
-                        <p style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>💬</p>
+                        <div style={{ marginBottom: '1rem', color: colors.primary }}>
+                            <MessageCircleIcon size={48} />
+                        </div>
                         <h2 style={{ color: colors.textMain, marginBottom: '0.5rem' }}>เข้าสู่ระบบเพื่อใช้งานแชท</h2>
                         <p>กรุณาเข้าสู่ระบบเพื่อพูดคุยกับผู้ใช้คนอื่น</p>
                         <button style={styles.loginBtn} onClick={onLoginClick}>เข้าสู่ระบบ</button>
@@ -319,7 +327,10 @@ const Chat = ({ user, onLoginClick }) => {
                 {/* Sidebar - Conversations List */}
                 <div style={styles.sidebar}>
                     <div style={styles.sidebarHeader}>
-                        <h2 style={styles.sidebarTitle}>💬 แชท</h2>
+                        <h2 style={styles.sidebarTitle}>
+                            <MessageCircleIcon size={24} color={colors.primary} />
+                            แชท
+                        </h2>
                     </div>
                     <div style={styles.conversationsList}>
                         {conversations.map(conv => (
@@ -414,7 +425,9 @@ const Chat = ({ user, onLoginClick }) => {
                         </>
                     ) : (
                         <div style={styles.emptyState}>
-                            <span style={styles.emptyIcon}>💬</span>
+                            <span style={styles.emptyIcon}>
+                                <MessageCircleIcon size={48} color={colors.primary} />
+                            </span>
                             <p>เลือกการสนทนาเพื่อเริ่มแชท</p>
                         </div>
                     )}
