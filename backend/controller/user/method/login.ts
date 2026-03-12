@@ -25,9 +25,12 @@ export default async function login(data: LoginData) {
 
         // 3. สร้าง JWT Token
         const token = jwt.sign(
-            { id: user._id, email: user.email },
-            process.env.JWT_SECRET || 'your_secret_key',
-            { expiresIn: '1d' }
+            {
+                userId: user._id.toString(),
+                username: user.username
+            },
+            process.env.JWT_SECRET || 'your_super_secret_key_change_this_in_production',
+            { expiresIn: '7d' }
         );
 
         return successRes({
